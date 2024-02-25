@@ -4,23 +4,48 @@ use serde_json::json;
 #[derive(Debug, Deserialize, Clone)]
 pub struct Message {
     #[serde(default = "default_u64")]
-    can_id: u64,
-    pgn: u64,
-    source: u16,
-    name: String,
-    priority: u16,
-    label: String,
+    pub can_id: i64,
+    pub pgn: u64,
+    pub source: u16,
+    pub name: String,
+    pub priority: u16,
+    pub label: String,
     #[serde(rename = "isExtendedFrame")]
-    is_extended_frame: bool,
-    dlc: u16,
-    comment: Option<String>,
+    pub is_extended_frame: bool,
+    pub dlc: u16,
+    pub comment: Option<String>,
     #[serde(default = "default_u64")]
-    line_in_dbc: u64,
-    problems: Vec<String>,
+    pub line_in_dbc: i64,
+    pub problems: Vec<Problem>,
     pub signals: Vec<String>,
 }
-fn default_u64() -> u64 {
+fn default_u64() -> i64 {
     0
+}
+impl Message {
+    pub fn new() -> Message {
+        Message {
+            can_id: -1,
+            pgn: 0,
+            source: 0,
+            name: String::from(""),
+            priority: 0,
+            label: String::from(""),
+            is_extended_frame: false,
+            dlc: 0,
+            comment: Some(String::from("")),
+            line_in_dbc: 0,
+            problems: Vec::new(),
+            signals: Vec::new(),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct Problem {
+    severity: String,
+    line: usize,
+    description: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -50,7 +75,7 @@ pub fn search_messages_by_id(messages: &Vec<Message>, query: &str) -> Vec<Messag
     for i in messages.iter() {
         // th
         // if the id of the signal contains the query, ignore case
-        if i.can_id == query.parse::<u64>().unwrap() {
+        if i.can_id == query.parse::<i64>().unwrap() {
             result.push(i.clone());
         }
     }

@@ -9,49 +9,49 @@ pub struct Problem {
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct State {
-    value: i32,
-    state: String,
+    pub value: i32,
+    pub state: String,
 }
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Signal {
     pub name: String,
-    label: String,
+    pub label: String,
     #[serde(rename = "startBit")]
-    start_bit: u32,
+    pub start_bit: u32,
     #[serde(rename = "bitLength")]
-    bit_length: u32,
+    pub bit_length: u32,
     #[serde(rename = "isLittleEndian")]
-    is_little_endian: bool,
+    pub is_little_endian: bool,
     #[serde(rename = "isSigned")]
-    is_signed: bool,
-    factor: f64,
-    offset: f32,
+    pub is_signed: bool,
+    pub factor: f64,
+    pub offset: f32,
     #[serde(default = "default_float")]
-    min: f32,
+    pub min: f32,
     #[serde(default = "default_float")]
-    max: f32,
+    pub max: f32,
     #[serde(rename = "sourceUnit")]
     #[serde(default = "String::new")]
-    source_unit: String,
+    pub source_unit: String,
     #[serde(rename = "dataType")]
-    data_type: String,
-    choking: bool,
-    visibility: bool,
-    interval: u32,
-    category: String,
+    pub data_type: String,
+    pub choking: bool,
+    pub visibility: bool,
+    pub interval: u32,
+    pub category: String,
     #[serde(rename = "lineInDbc")]
-    line_in_dbc: u32,
-    problems: Vec<Problem>,
+    pub line_in_dbc: u32,
+    pub problems: Vec<Problem>,
     #[serde(rename = "postfixMetric")]
     #[serde(default = "String::new")]
-    postfix_metric: String,
+    pub postfix_metric: String,
     #[serde(default = "Vec::new")]
-    states: Vec<State>,
+    pub states: Vec<State>,
     #[serde(rename = "msgId")]
-    msg_id: u64,
+    pub msg_id: u64,
     #[serde(rename = "msgName")]
-    msg_name: String,
+    pub msg_name: String,
 }
 
 fn default_float() -> f32 {

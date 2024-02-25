@@ -12,7 +12,9 @@ function triggerFileUpload() {
 
 async function greet() {
   // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-  greetMsgEl.innerHTML = await invoke("search", { query: greetInputEl.value });
+
+  if (greetInputEl.value.length > 2)
+    greetMsgEl.innerHTML = await invoke("search", { query: greetInputEl.value });
 }
 
 async function show_signal(name) {
@@ -42,7 +44,7 @@ window.onload = () => {
 window.addEventListener("DOMContentLoaded", () => {
   greetInputEl = document.querySelector("#signal-input");
   greetMsgEl = document.querySelector("#results");
-  document.querySelector("#signal-input").addEventListener("change", (e) => {
+  document.querySelector("#signal-input").addEventListener("keyup", (e) => {
     e.preventDefault();
     greet();
   });

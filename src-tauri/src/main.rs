@@ -27,6 +27,8 @@ use crate::can::messages::search_messages_by_name;
 use crate::can::messages::search_messages_by_signal;
 use crate::can::messages::Message;
 
+use crate::parser::parser::parse_dbc;
+
 // Create a struct to hold the index and signals
 struct AppState {
     signals: Mutex<Vec<Signal>>,
@@ -93,13 +95,18 @@ fn show_message(query: &str, app_state: tauri::State<AppState>) -> String {
     }
 }
 #[tauri::command]
-async fn upload_dbc(base64_data: String) -> String {
+fn upload_dbc(base64_data: String, app_state: tauri::State<AppState>) -> String {
     // Make the HTTP request in an asynchronous context
     let bytes = general_purpose::STANDARD.decode(base64_data).unwrap();
     let s = match String::from_utf8(bytes) {
         Ok(v) => v,
         Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
     };
+    let (messages, signals) = parse_dbc(&s);
+    let mut state_mex = app_state.messages.lock().unwrap();
+    let mut state_sig = app_state.signals.lock().unwrap();
+    *state_mex = messages;
+    *state_sig = signals;
     s
 }
 
@@ -109,8 +116,10 @@ fn main() {
     // Create the index
     let json_file = "../sample/dbc.json";
     let json = std::fs::read_to_string(json_file).expect("Failed to read file");
-    let signals = get_signals(&json);
-    let messages = get_messages(&json);
+    let signals = Vec::new();
+    //let signals = get_signals(&json);
+    let messages = Vec::new();
+    //let messages = get_messages(&json);
     let app_state = AppState::new(signals, messages);
     println!("App state created");
 
