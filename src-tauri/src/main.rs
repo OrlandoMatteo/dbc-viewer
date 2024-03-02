@@ -108,11 +108,7 @@ fn upload_dbc(base64_data: String, app_state: tauri::State<AppState>) -> String 
 }
 
 fn main() {
-    let current_dir = env::current_dir().expect("Failed to get current directory");
-    println!("Current directory: {:?}", current_dir);
     // Create the index
-    let json_file = "../sample/dbc.json";
-    let json = std::fs::read_to_string(json_file).expect("Failed to read file");
     let signals = Vec::new();
     //let signals = get_signals(&json);
     let messages = Vec::new();

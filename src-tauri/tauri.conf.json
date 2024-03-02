@@ -1,6 +1,6 @@
 {
   "productName": "dbc-viewer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "identifier": "dbc-viewer.orlando.tauri.dev",
   "build": {
     "frontendDist": "../src"
@@ -10,8 +10,8 @@
     "windows": [
       {
         "title": "dbc-viewer",
-        "width": 800,
-        "height": 600
+        "width": 1080,
+        "height": 920
       }
     ],
     "security": {
