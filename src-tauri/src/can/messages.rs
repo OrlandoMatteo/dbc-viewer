@@ -102,19 +102,21 @@ pub fn get_li_from_message(message: &Message) -> String {
     // the item should have hx-get attribute with the message name
     // the item should have hx-target attribute with the id signal_card
     let query_value = json!({"query":message.name});
+    //let li = format!(
+    //    "<li
+    //    hx-on:click=\"
+    //    var items = document.querySelectorAll('.list-group-item');
+    //    // Loop through each element and remove the 'active' class
+    //    items.forEach(function(item) {{
+    //    item.classList.remove('active');
+    //        }});
+    //    let newTab = event.target
+    //    newTab.classList.add('active')\"
+    //        class=\"p-2 list-group-item\" hx-post=\"command:show_message\" name=query hx-vals={} hx-target=\"#signal_card\" hx-swap=innerHTML  >{}</li>
+    //    ",
     let li = format!(
-        "<li 
-        hx-on:click=\"
-        var items = document.querySelectorAll('.list-group-item');
-        // Loop through each element and remove the 'active' class
-        items.forEach(function(item) {{
-        item.classList.remove('active');
-            }});
-        let newTab = event.target
-        newTab.classList.add('active')\"
-            class=\"p-2 list-group-item\" hx-post=\"command:show_message\" name=query hx-vals={} hx-target=\"#signal_card\" hx-swap=innerHTML  >{}</li>
-        ",
-        query_value, message.name
+        "<li class=\"p-2 list-group-item\" onClick=\"get_message('{}')\">{}<span class=\"badge rounded-pill bg-message\">M</span></li> ",
+        message.name, message.name
     );
     li
 }
@@ -124,7 +126,10 @@ pub fn get_card_from_message(message: &Message) -> String {
 
     let mut signal_str = String::from("<ul class=\"list-group\">");
     for signal in &message.signals {
-        let sig_li = format!("<li class=\"list-group-item\">{}</li>", signal);
+        let sig_li = format!(
+            "<li class=\"list-group-item\" onClick=\"get_signal('{}')\">{}</li>",
+            signal, signal
+        );
         signal_str.push_str(&sig_li)
     }
 
@@ -133,7 +138,7 @@ pub fn get_card_from_message(message: &Message) -> String {
     <div class=\"card-body\">
         <h5 class=\"card-title\">{}</h5>
         <div class=\"bd-highlight mb-3\">
-        <div class=\"p-2 bd-highlight\">CAN ID: {}</div>
+        <div class=\"p-2 bd-highlight\">CAN ID: {:#X}</div>
         <div class=\"p-2 bd-highlight\">PGN: {}</div>
         <div class=\"p-2 bd-highlight\">Signals: {}</div
         </div>

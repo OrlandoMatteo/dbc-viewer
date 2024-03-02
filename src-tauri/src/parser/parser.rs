@@ -2,6 +2,7 @@ use crate::can::messages::{Message, Problem};
 use crate::can::signals::Signal;
 use crate::can::signals::State;
 use crate::parser::utils::extract_signal_data;
+use crate::parser::utils::extract_signal_id;
 use crate::parser::utils::extract_val_data;
 use crate::parser::utils::split_can_id;
 
@@ -90,7 +91,7 @@ pub fn parse_dbc(dbc_string: &String) -> (Vec<Message>, Vec<Signal>) {
             "VAL_" => {
                 match extract_val_data(line) {
                     Ok(states) => {
-                        for mut s in &mut signals {
+                        for s in &mut signals {
                             if tokens[2] == s.name {
                                 s.states = states.clone();
                             }
@@ -101,7 +102,24 @@ pub fn parse_dbc(dbc_string: &String) -> (Vec<Message>, Vec<Signal>) {
                 // Handle VAL_ lines
                 // ... (parse VAL_ line details)
             }
+            "BA_" => {
+                if tokens.len() == 5 {
+                    if tokens[1].contains("CI_SigId") {
+                        match extract_signal_id(&tokens) {
+                            Ok(sig_id) => {
+                                for s in &mut signals {
+                                    if tokens[4] == s.name {
+                                        s.sig_id = sig_id.clone();
+                                    }
+                                }
+                            }
+                            Err(err) => continue,
+                        }
+                    }
+                }
+            }
             _ => {
+
                 // Handle unknown lines (optionally report a warning)
             }
         }

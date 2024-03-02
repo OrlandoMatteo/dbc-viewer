@@ -67,9 +67,6 @@ fn search(query: &str, app_state: tauri::State<AppState>) -> String {
     for result in message_result.iter() {
         html.push_str(&format!("{}", get_li_from_message(result)));
     }
-    for result in signals_in_message.iter() {
-        html.push_str(&format!("{}", get_li_from_message(result)));
-    }
     html
 }
 

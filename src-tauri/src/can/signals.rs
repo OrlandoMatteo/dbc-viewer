@@ -52,6 +52,7 @@ pub struct Signal {
     pub msg_id: u64,
     #[serde(rename = "msgName")]
     pub msg_name: String,
+    pub sig_id: i32,
 }
 
 fn default_float() -> f32 {
@@ -84,7 +85,7 @@ pub fn get_card_from_signal(signal: &Signal) -> String {
         </div>
         <div class=\"row\">
         <div class=\"p-2 col bd-highlight\">Source unit: {}</div>
-        <div class=\"p-2 col bd-highlight\">Data type: {}</div>
+        <div class=\"p-2 col bd-highlight\">Signal ID: {}</div>
         </div>
         <div class=\"row\">
         <div class=\"p-2 col bd-highlight\">Interval: {}</div>
@@ -94,7 +95,7 @@ pub fn get_card_from_signal(signal: &Signal) -> String {
         <div class=\"p-2 col bd-highlight\"><h3>States</h3>{}</div>
         </div>
         <div class=\"row\">
-        <div class=\"p-2 col bd-highlight\">Msg ID: {}</div>
+        <div class=\"p-2 col bd-highlight\">Msg ID: {:#X}</div>
         <div class=\"p-2 col bd-highlight\">Msg Name: {}</div
         </div>
         </div>
@@ -109,7 +110,7 @@ pub fn get_card_from_signal(signal: &Signal) -> String {
         signal.min,
         signal.max,
         signal.source_unit,
-        signal.data_type,
+        signal.sig_id,
         signal.interval,
         signal.category,
         get_table_for_states(&signal.states),
@@ -133,7 +134,7 @@ pub fn get_li_from_signal(signal: &Signal) -> String {
         //    }});
         //let newTab = event.target
         //newTab.classList.add('active')\"
-        "<li class=\"p-2 list-group-item\" onClick=\"get_signal('{}')\">{}</li> ",
+        "<li class=\"p-2 list-group-item\" onClick=\"get_signal('{}')\">{}<span class=\"badge rounded-pill bg-signal\">S</span></li> ",
         signal.name, signal.name
     );
     li
@@ -173,7 +174,7 @@ pub fn search_signal(signals: &Vec<Signal>, query: &str) -> Option<Signal> {
 }
 
 fn get_table_for_states(states: &Vec<State>) -> String {
-    let mut table = String::from("<table class=\"table table-striped\">");
+    let mut table = String::from("<table class=\"table table-hover\">");
     table.push_str("<thead><tr><th>Value</th><th>State</th></tr></thead>");
     table.push_str("<tbody>");
     for state in states.iter() {

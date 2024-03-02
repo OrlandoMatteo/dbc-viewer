@@ -15,12 +15,31 @@ async function greet() {
 
   if (greetInputEl.value.length > 2)
     greetMsgEl.innerHTML = await invoke("search", { query: greetInputEl.value });
+  let results = document.querySelectorAll('.list-group-item')
+
+  results.forEach(function(elem) {
+    elem.addEventListener('click', function() {
+      var items = document.querySelectorAll('.list-group-item');
+      //    // Loop through each element and remove the 'active' class
+      items.forEach(function(item) {
+        {
+          item.classList.remove('active');
+        }
+      });
+      let newTab = event.target
+      newTab.classList.add('active')
+    })
+  })
 }
 
 async function show_signal(name) {
   signal_card.innerHTML = await invoke("show_signal", { query: name });
-
 }
+
+async function show_message(name) {
+  signal_card.innerHTML = await invoke("show_message", { query: name });
+}
+
 
 async function load_dbc(file) {
   let pippo = await invoke("upload_dbc", { base64Data: file });
@@ -38,6 +57,9 @@ window.onload = () => {
     };
 
     reader.readAsDataURL(file);
+    document.getElementById('filename').innerHTML = "Loaded DBC: " + file.name;
+    document.getElementById('filename').classList.remove("alert-light");
+    document.getElementById('filename').classList.add("alert-success");
   });
 }
 
@@ -50,7 +72,29 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+
 function get_signal(name) {
+
   signal_card = document.querySelector("#signal_card");
   show_signal(name);
 }
+
+function get_message(name) {
+  signal_card = document.querySelector("#signal_card");
+  show_message(name);
+}
+
+// Get the car image element
+const carImage = document.querySelector('#car-container img');
+
+// Define a function to start the animation
+function startAnimation() {
+  carImage.classList.add('animate'); // Add a class to trigger the animation
+}
+
+// Define a function to stop the animation
+function stopAnimation() {
+  carImage.classList.remove('animate'); // Remove the class to stop the animation
+}
+
+

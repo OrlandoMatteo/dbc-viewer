@@ -102,14 +102,36 @@ pub fn extract_signal_data(
         states: Vec::new(),
         msg_id: can_id as u64,
         msg_name: message_name,
+        sig_id: 0,
     })
 }
 
 pub fn extract_val_data(_line: &str) -> Result<Vec<State>, String> {
     let mut states: Vec<State> = Vec::new();
-    let mut parts = _line.split(' ');
-    parts.next(); // Skip VAL_
-    parts.next(); // Skip first number
-    let tokens = _line.split("");
+    let joined = _line
+        .split_whitespace()
+        .skip(3)
+        .collect::<Vec<&str>>()
+        .join(" ");
+
+    let descriptions: Vec<&str> = joined.split('"').collect();
+    let number_of_states = descriptions.len() / 2;
+    for i in 0..number_of_states {
+        let value = descriptions[i * 2]
+            .trim()
+            .parse::<i32>()
+            .unwrap_or_default();
+        let state = String::from(descriptions[i * 2 + 1]);
+        states.push(State { value, state });
+    }
+
     Ok(states)
+}
+
+pub fn extract_signal_id(tokens: &Vec<&str>) -> Result<i32, String> {
+    let sig_id: i32 = tokens[5]
+        .replace(";", "")
+        .parse::<i32>()
+        .unwrap_or_default();
+    Ok(sig_id)
 }
