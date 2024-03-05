@@ -13,7 +13,6 @@ mod parser;
 
 use crate::can::signals::get_card_from_signal;
 use crate::can::signals::get_li_from_signal;
-use crate::can::signals::get_signals;
 use crate::can::signals::search_signal;
 use crate::can::signals::search_signals;
 use crate::can::signals::Signal;
@@ -21,24 +20,26 @@ use std::sync::Mutex;
 
 use crate::can::messages::get_card_from_message;
 use crate::can::messages::get_li_from_message;
-use crate::can::messages::get_messages;
 use crate::can::messages::search_message;
 use crate::can::messages::search_messages_by_name;
-use crate::can::messages::search_messages_by_signal;
 use crate::can::messages::Message;
 
 use crate::parser::parser::parse_dbc;
+
+use serde_json::json;
 
 // Create a struct to hold the index and signals
 struct AppState {
     signals: Mutex<Vec<Signal>>,
     messages: Mutex<Vec<Message>>,
+    filename: Mutex<String>,
 }
 impl AppState {
     fn new(signals: Vec<Signal>, messages: Vec<Message>) -> Self {
         Self {
             signals: Mutex::new(signals),
             messages: Mutex::new(messages),
+            filename: Mutex::from(String::from("")),
         }
     }
 }
@@ -58,7 +59,6 @@ fn search(query: &str, app_state: tauri::State<AppState>) -> String {
     let messages = app_state.messages.lock().unwrap();
     let message_result: Vec<Message> = search_messages_by_name(&messages, &query);
     println!("FOUND: {:?}  signals", signal_result.len());
-    let signals_in_message: Vec<Message> = search_messages_by_signal(&messages, &query);
     // format the results to an html list
     let mut html = String::from("<ul class=\"list-group\">");
     for result in signal_result.iter() {
@@ -67,6 +67,7 @@ fn search(query: &str, app_state: tauri::State<AppState>) -> String {
     for result in message_result.iter() {
         html.push_str(&format!("{}", get_li_from_message(result)));
     }
+    html.push_str("</ul>");
     html
 }
 
@@ -92,27 +93,79 @@ fn show_message(query: &str, app_state: tauri::State<AppState>) -> String {
     }
 }
 #[tauri::command]
-fn upload_dbc(base64_data: String, app_state: tauri::State<AppState>) -> String {
+fn upload_dbc(base64_data: String, filename: String, app_state: tauri::State<AppState>) -> String {
     // Make the HTTP request in an asynchronous context
     let bytes = general_purpose::STANDARD.decode(base64_data).unwrap();
-    let s = match String::from_utf8(bytes) {
-        Ok(v) => v,
-        Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
+    let response = match String::from_utf8(bytes) {
+        Ok(v) => {
+            let (messages, signals) = parse_dbc(&v);
+            let mut state_mex = app_state.messages.lock().unwrap();
+            let mut state_sig = app_state.signals.lock().unwrap();
+            let mut state_filename = app_state.filename.lock().unwrap();
+            *state_filename = filename;
+            *state_mex = messages;
+            *state_sig = signals;
+            let response = json!({
+            "code":200,
+            "message":String::from(format!("Loaded file {}", state_filename))
+            });
+            response
+        }
+        Err(e) => {
+            let response = json!({
+            "code":400,
+            "message":String::from(format!("Invalid UTF-8 sequence: {}", e))
+            });
+            response
+        }
     };
-    let (messages, signals) = parse_dbc(&s);
-    let mut state_mex = app_state.messages.lock().unwrap();
-    let mut state_sig = app_state.signals.lock().unwrap();
-    *state_mex = messages;
-    *state_sig = signals;
-    s
+    response.to_string()
+}
+
+#[tauri::command]
+fn is_dbc_loaded(app_state: tauri::State<AppState>) -> String {
+    if app_state.messages.lock().unwrap().len() == 0 {
+        let response = json!({
+        "code":404,
+        "message":"No DBC loaded"
+        });
+        response.to_string()
+    } else {
+        let response = json!({
+        "code":200,
+        "message":String::from(format!("Loaded file {}",app_state.filename.lock().unwrap().clone()))
+        });
+        response.to_string()
+    }
+}
+
+#[tauri::command]
+fn get_all_signals(app_state: tauri::State<AppState>) -> String {
+    let state_sig = app_state.signals.lock().unwrap();
+    let mut html = String::from("<ul class=\"list-group\">");
+    if state_sig.len() > 0 {
+        for result in state_sig.iter() {
+            html.push_str(&format!("{}", get_li_from_signal(result)));
+        }
+    }
+    html.push_str("</ul>");
+    html
+}
+#[tauri::command]
+fn get_all_messages(app_state: tauri::State<AppState>) -> String {
+    let state_mex = app_state.messages.lock().unwrap();
+    let mut html = String::from("<ul class=\"list-group\">");
+    if state_mex.len() > 0 {
+        for result in state_mex.iter() {
+            html.push_str(&format!("{}", get_li_from_message(result)));
+        }
+    }
+    html.push_str("</ul>");
+    html
 }
 
 fn main() {
-    let current_dir = env::current_dir().expect("Failed to get current directory");
-    println!("Current directory: {:?}", current_dir);
     // Create the index
-    let json_file = "../sample/dbc.json";
-    let json = std::fs::read_to_string(json_file).expect("Failed to read file");
     let signals = Vec::new();
     //let signals = get_signals(&json);
     let messages = Vec::new();
@@ -127,7 +180,10 @@ fn main() {
             search,
             show_signal,
             show_message,
-            upload_dbc
+            upload_dbc,
+            is_dbc_loaded,
+            get_all_signals,
+            get_all_messages,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

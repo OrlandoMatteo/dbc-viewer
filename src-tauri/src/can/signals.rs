@@ -69,7 +69,7 @@ pub fn get_card_from_signal(signal: &Signal) -> String {
     let card = format!(
         "<div class=\"card\">
     <div class=\"card-body\">
-        <h5 class=\"card-title\">{}</h5>
+        <h5 class=\"card-title \">{}<span class=\"badge rounded-pill bg-signal float-right\">S</span></h5>
         <h6 class=\"card-subtitle mb-2 text-muted\">{}</h6>
         <div class=\"row\">
         <div class=\"p-2 col bd-highlight\">Start bit: {}</div>
@@ -134,7 +134,7 @@ pub fn get_li_from_signal(signal: &Signal) -> String {
         //    }});
         //let newTab = event.target
         //newTab.classList.add('active')\"
-        "<li class=\"p-2 list-group-item\" onClick=\"get_signal('{}')\">{}<span class=\"badge rounded-pill bg-signal\">S</span></li> ",
+        "<li class=\"p-2 list-group-item\" onClick=\"get_signal('{}')\">{}<span class=\"badge rounded-pill bg-signal float-right\">S</span></li> ",
         signal.name, signal.name
     );
     li

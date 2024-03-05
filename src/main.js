@@ -40,37 +40,82 @@ async function show_message(name) {
   signal_card.innerHTML = await invoke("show_message", { query: name });
 }
 
-
-async function load_dbc(file) {
-  let pippo = await invoke("upload_dbc", { base64Data: file });
-  console.log(pippo);
-}
-window.onload = () => {
-  document.getElementById('file-input').addEventListener('change', (event) => {
-    const file = event.target.files[0];
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-      const base64Content = e.target.result.split(',')[1]; // Extract Base64 data
-      // Send the Base64 data to your Tauri backend using a Tauri command
-      load_dbc(base64Content);
-    };
-
-    reader.readAsDataURL(file);
-    document.getElementById('filename').innerHTML = "Loaded DBC: " + file.name;
+async function is_dbc_loaded() {
+  let _response = await invoke("is_dbc_loaded");
+  let response = JSON.parse(_response)
+  if (response.code == 200) {
+    document.getElementById('filename').innerHTML = response.message;
     document.getElementById('filename').classList.remove("alert-light");
     document.getElementById('filename').classList.add("alert-success");
-  });
+  }
+  else {
+    document.getElementById('filename').innerHTML = response.message;
+  }
+
+
+}
+
+async function load_dbc(file, filename) {
+  let _response = await invoke("upload_dbc", { base64Data: file, filename: filename });
+  let response = JSON.parse(_response)
+  if (response.code == 200) {
+    document.getElementById('filename').innerHTML = response.message;
+    document.getElementById('filename').classList.remove("alert-light");
+    document.getElementById('filename').classList.add("alert-success");
+  }
+  else {
+    document.getElementById('filename').innerHTML = response.message;
+    document.getElementById('filename').classList.remove("alert-light");
+    document.getElementById('filename').classList.add("alert-danger");
+  }
+  var path = window.location.pathname;
+  var page = path.split("/").pop();
+  if (page == "signals.html") {
+    get_all_signals()
+  }
+  else if (page == "message.html") {
+    get_all_messages()
+  }
+}
+async function get_all_signals() {
+  document.getElementById("page").innerHTML = await invoke("get_all_signals");
+}
+async function get_all_messages() {
+  document.getElementById("page").innerHTML = await invoke("get_all_messages");
+}
+
+window.onload = () => {
+  let file_input = document.getElementById('file-input')
+  if (file_input) {
+    file_input.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        const base64Content = e.target.result.split(',')[1]; // Extract Base64 data
+        // Send the Base64 data to your Tauri backend using a Tauri command
+        load_dbc(base64Content, file.name);
+      };
+
+      reader.readAsDataURL(file);
+
+    });
+  }
 }
 
 window.addEventListener("DOMContentLoaded", () => {
   greetInputEl = document.querySelector("#signal-input");
   greetMsgEl = document.querySelector("#results");
-  document.querySelector("#signal-input").addEventListener("keyup", (e) => {
-    e.preventDefault();
-    greet();
-  });
+  let signal_input = document.querySelector("#signal-input")
+  if (signal_input) {
+    signal_input.addEventListener("keyup", (e) => {
+      e.preventDefault();
+      greet();
+    });
+    is_dbc_loaded();
+  }
 });
+
 
 
 function get_signal(name) {
