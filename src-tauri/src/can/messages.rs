@@ -115,7 +115,7 @@ pub fn get_li_from_message(message: &Message) -> String {
     //        class=\"p-2 list-group-item\" hx-post=\"command:show_message\" name=query hx-vals={} hx-target=\"#signal_card\" hx-swap=innerHTML  >{}</li>
     //    ",
     let li = format!(
-        "<li class=\"p-2 list-group-item\" onClick=\"get_message('{}')\">{}<span class=\"badge rounded-pill bg-message\">M</span></li> ",
+        "<li class=\"p-2 list-group-item\" onClick=\"get_message('{}')\">{}<span class=\"badge rounded-pill bg-message float-right\">M</span></li> ",
         message.name, message.name
     );
     li
@@ -136,7 +136,7 @@ pub fn get_card_from_message(message: &Message) -> String {
     let card = format!(
         "<div class=\"card\">
     <div class=\"card-body\">
-        <h5 class=\"card-title\">{}</h5>
+        <h5 class=\"card-title\">{}<span class=\"badge rounded-pill bg-message float-right\">M</h5>
         <div class=\"bd-highlight mb-3\">
         <div class=\"p-2 bd-highlight\">CAN ID: {:#X}</div>
         <div class=\"p-2 bd-highlight\">PGN: {}</div>
