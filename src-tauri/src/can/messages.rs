@@ -101,7 +101,7 @@ pub fn get_li_from_message(message: &Message) -> String {
     // the item should have hx-id attribute with the message name
     // the item should have hx-get attribute with the message name
     // the item should have hx-target attribute with the id signal_card
-    let query_value = json!({"query":message.name});
+    let _query_value = json!({"query":message.name});
     //let li = format!(
     //    "<li
     //    hx-on:click=\"
@@ -127,7 +127,7 @@ pub fn get_card_from_message(message: &Message) -> String {
     let mut signal_str = String::from("<ul class=\"list-group\">");
     for signal in &message.signals {
         let sig_li = format!(
-            "<li class=\"list-group-item\" onClick=\"get_signal('{}')\">{}</li>",
+            "<li class=\"list-group-item\" ><a class=\"link-primary\" onClick=\"get_signal('{}')\">{}</a></li>",
             signal, signal
         );
         signal_str.push_str(&sig_li)

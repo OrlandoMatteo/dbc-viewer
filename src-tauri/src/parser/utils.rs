@@ -44,7 +44,7 @@ pub fn extract_signal_data(
     //    _ => (false, None),
     //};
     let line: Vec<&str> = _line.split_whitespace().collect();
-    let name: String = String::from(line[1].clone());
+    let name: String = String::from(line[1]);
     // Parse remaining fields
     let sb_bl_endian: Vec<String> = line[3].split('|').map(|s| s.to_string()).collect();
     let mut start_bit: u32 = 0;

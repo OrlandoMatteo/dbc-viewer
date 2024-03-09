@@ -1,22 +1,14 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use base64::{
-    alphabet,
-    engine::{self, general_purpose},
-    Engine as _,
-};
+use base64::{engine::general_purpose, Engine as _};
 use std::env;
+use std::sync::Mutex;
 // import the functions from can/engine.rs
 mod can;
 mod parser;
 
-use crate::can::signals::get_card_from_signal;
-use crate::can::signals::get_li_from_signal;
-use crate::can::signals::search_signal;
-use crate::can::signals::search_signals;
-use crate::can::signals::Signal;
-use std::sync::Mutex;
+use crate::can::signals::*;
 
 use crate::can::messages::get_card_from_message;
 use crate::can::messages::get_li_from_message;
@@ -142,13 +134,13 @@ fn is_dbc_loaded(app_state: tauri::State<AppState>) -> String {
 #[tauri::command]
 fn get_all_signals(app_state: tauri::State<AppState>) -> String {
     let state_sig = app_state.signals.lock().unwrap();
-    let mut html = String::from("<ul class=\"list-group\">");
+    let mut html = String::from("<div class=\"accordion\" id=\"signalsAccordion\">");
     if state_sig.len() > 0 {
         for result in state_sig.iter() {
-            html.push_str(&format!("{}", get_li_from_signal(result)));
+            html.push_str(&format!("{}", get_details_from_signal(result)));
         }
     }
-    html.push_str("</ul>");
+    html.push_str("</div>");
     html
 }
 #[tauri::command]

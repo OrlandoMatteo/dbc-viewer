@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use serde_json::json;
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct Problem {
     severity: String,
@@ -96,7 +96,7 @@ pub fn get_card_from_signal(signal: &Signal) -> String {
         </div>
         <div class=\"row\">
         <div class=\"p-2 col bd-highlight\">Msg ID: {:#X}</div>
-        <div class=\"p-2 col bd-highlight\">Msg Name: {}</div
+        <div class=\"p-2 col bd-highlight\">Msg Name: <a class=\"link-primary\" onClick=\"get_message('{}')\">{}</a></div
         </div>
         </div>
     </div>
@@ -115,6 +115,7 @@ pub fn get_card_from_signal(signal: &Signal) -> String {
         signal.category,
         get_table_for_states(&signal.states),
         signal.msg_id,
+        signal.msg_name,
         signal.msg_name
     );
     card
@@ -187,38 +188,45 @@ fn get_table_for_states(states: &Vec<State>) -> String {
     table
 }
 
-fn get_details_from_signal(signal: &Signal) -> String {
+pub fn get_details_from_signal(signal: &Signal) -> String {
     let details = format!(
-        "<details>
-        <summary>{}</summary>
-        <div class=\"row\">
-        <div class=\"p-2 col bd-highlight\">Start bit: {}</div>
-        <div class=\"p-2 col bd-highlight\">Bit length: {}</div>
-        </div>
-        <div class=\"row\">
-        <div class=\"p-2 col bd-highlight\">Factor: {}</div>
-        <div class=\"p-2 col bd-highlight\">Offset: {}</div>
-        </div>
-        <div class=\"row\">
-        <div class=\"p-2 col bd-highlight\">Min: {}</div>
-        <div class=\"p-2 col bd-highlight\">Max: {}</div>
-        </div>
-        <div class=\"row\">
-        <div class=\"p-2 col bd-highlight\">Source unit: {}</div>
-        <div class=\"p-2 col bd-highlight\">Signal ID: {}</div>
-        </div>
-        <div class=\"row\">
-        <div class=\"p-2 col bd-highlight\">Interval: {}</div>
-        <div class=\"p-2 col bd-highlight\">Category: {}</div>
-        </div>
-        <div class=\"row\">
-        <div class=\"p-2 col bd-highlight\"><h3>States</h3>{}</div>
-        </div>
-        <div class=\"row\">
-        <div class=\"p-2 col bd-highlight\">Msg ID: {:#X}</div>
-        <div class=\"p-2 col bd-highlight\">Msg Name: {}</div
-        </div>
-</summary>",
+        "<div class=\"accordion-item border-bottom-0\">
+            <button class=\"accordion-button collapsed\" type=\"button\" data-bs-toggle=\"collapse\" data-bs-target=\"#{}\" aria-expanded=\"false\" aria-controls=\"{}\">{}</button>
+                <div id=\"{}\" class=\"accordion-collapse collapse\" data-bs-parent=\"#signalsAccordion\">
+                    <div class=\"accordion-body\">
+                    <div class=\"row\">
+                    <div class=\"p-2 col bd-highlight\">Start bit: {}</div>
+                    <div class=\"p-2 col bd-highlight\">Bit length: {}</div>
+                    </div>
+                    <div class=\"row\">
+                    <div class=\"p-2 col bd-highlight\">Factor: {}</div>
+                    <div class=\"p-2 col bd-highlight\">Offset: {}</div>
+                    </div>
+                    <div class=\"row\">
+                    <div class=\"p-2 col bd-highlight\">Min: {}</div>
+                    <div class=\"p-2 col bd-highlight\">Max: {}</div>
+                    </div>
+                    <div class=\"row\">
+                    <div class=\"p-2 col bd-highlight\">Source unit: {}</div>
+                    <div class=\"p-2 col bd-highlight\">Signal ID: {}</div>
+                    </div>
+                    <div class=\"row\">
+                    <div class=\"p-2 col bd-highlight\">Interval: {}</div>
+                    <div class=\"p-2 col bd-highlight\">Category: {}</div>
+                    </div>
+                    <div class=\"row\">
+                    <div class=\"p-2 col bd-highlight\"><h3>States</h3>{}</div>
+                    </div>
+                    <div class=\"row\">
+                    <div class=\"p-2 col bd-highlight\">Msg ID: {:#X}</div>
+                    <div class=\"p-2 col bd-highlight\">Msg Name: {}</div
+                    </div>
+                </div>
+            </div>
+        </div>",
+        signal.name,
+        signal.name,
+        signal.name,
         signal.name,
         signal.start_bit,
         signal.bit_length,
