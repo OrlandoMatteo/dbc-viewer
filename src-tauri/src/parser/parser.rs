@@ -1,12 +1,10 @@
-use crate::can::messages::{Message, Problem};
+use crate::can::messages::Message;
 use crate::can::signals::Signal;
-use crate::can::signals::State;
+
 use crate::parser::utils::extract_signal_data;
 use crate::parser::utils::extract_signal_id;
 use crate::parser::utils::extract_val_data;
 use crate::parser::utils::split_can_id;
-
-use serde::Deserialize;
 
 pub fn parse_dbc(dbc_string: &String) -> (Vec<Message>, Vec<Signal>) {
     // Split the DBC string into lines
@@ -14,20 +12,20 @@ pub fn parse_dbc(dbc_string: &String) -> (Vec<Message>, Vec<Signal>) {
     let mut messages: Vec<Message> = Vec::new();
     let mut signals: Vec<Signal> = Vec::new();
     // Parse each line into tokens, handling quoted strings
-    let mut dbc_data: Vec<Vec<&str>> = Vec::new();
+    let _dbc_data: Vec<Vec<&str>> = Vec::new();
     let mut counter: usize = 0;
     let mut current_message: Message = Message::new();
     for line in dbc_lines {
         let mut tokens = Vec::new();
-        let mut current_token = String::new();
-        let mut in_quote = false;
+        let _current_token = String::new();
+        let _in_quote = false;
         tokens = line.split_whitespace().collect();
         // Data structures for storing parsed information
         //let mut val_list: Vec<T> = Vec::new();
         //let mut data_type_list = Vec::new();
         //let mut comment_list = Vec::new();
         //let mut signal_id_list = Vec::new();
-        let mut problems = Vec::new();
+        let problems = Vec::new();
 
         // Process each parsed line
         if tokens.is_empty() {
@@ -44,7 +42,7 @@ pub fn parse_dbc(dbc_string: &String) -> (Vec<Message>, Vec<Signal>) {
                 let mut name = String::from(tokens[2]);
                 name.truncate(name.len() - 1);
                 let dlc_str = tokens[3];
-                let can_id: i64 = can_id_str.parse::<i64>().unwrap();
+                let can_id: i64 = can_id_str.parse::<i64>().unwrap() & 0x1fffffff;
                 // Parse DLC
                 let dlc = dlc_str.parse::<u16>().unwrap();
                 // Split CAN ID (optional)
@@ -61,7 +59,7 @@ pub fn parse_dbc(dbc_string: &String) -> (Vec<Message>, Vec<Signal>) {
                         mex.line_in_dbc = counter as i64;
                         mex.problems = problems.clone();
                     }
-                    Err(err) => continue,
+                    Err(_err) => continue,
                 };
                 if current_message.can_id != 0 {
                     //   println!("Error: no signals found for the current message");
@@ -83,7 +81,7 @@ pub fn parse_dbc(dbc_string: &String) -> (Vec<Message>, Vec<Signal>) {
                         signals.push(signal.clone());
                         current_message.signals.push(signal.name);
                     }
-                    Err(err) => continue,
+                    Err(_err) => continue,
                 }
                 // Handle SG_ lines
                 // ... (parse SG_ line details)
@@ -97,7 +95,7 @@ pub fn parse_dbc(dbc_string: &String) -> (Vec<Message>, Vec<Signal>) {
                             }
                         }
                     }
-                    Err(err) => continue,
+                    Err(_err) => continue,
                 }
                 // Handle VAL_ lines
                 // ... (parse VAL_ line details)
@@ -113,7 +111,7 @@ pub fn parse_dbc(dbc_string: &String) -> (Vec<Message>, Vec<Signal>) {
                                     }
                                 }
                             }
-                            Err(err) => continue,
+                            Err(_err) => continue,
                         }
                     }
                 }

@@ -78,6 +78,7 @@ async function load_dbc(file, filename) {
   }
 }
 async function get_all_signals() {
+  show_spinner()
   document.getElementById("page").innerHTML = await invoke("get_all_signals");
 }
 async function get_all_messages() {
@@ -140,6 +141,12 @@ function startAnimation() {
 // Define a function to stop the animation
 function stopAnimation() {
   carImage.classList.remove('animate'); // Remove the class to stop the animation
+}
+
+function show_spinner() {
+  document.getElementById("page").innerHTML = `<div class="spinner-border" role="status">
+  <span class="visually-hidden">Loading...</span>
+</div>`
 }
 
 
