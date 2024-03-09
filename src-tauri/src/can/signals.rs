@@ -186,3 +186,53 @@ fn get_table_for_states(states: &Vec<State>) -> String {
     table.push_str("</tbody></table>");
     table
 }
+
+fn get_details_from_signal(signal: &Signal) -> String {
+    let details = format!(
+        "<details>
+        <summary>{}</summary>
+        <div class=\"row\">
+        <div class=\"p-2 col bd-highlight\">Start bit: {}</div>
+        <div class=\"p-2 col bd-highlight\">Bit length: {}</div>
+        </div>
+        <div class=\"row\">
+        <div class=\"p-2 col bd-highlight\">Factor: {}</div>
+        <div class=\"p-2 col bd-highlight\">Offset: {}</div>
+        </div>
+        <div class=\"row\">
+        <div class=\"p-2 col bd-highlight\">Min: {}</div>
+        <div class=\"p-2 col bd-highlight\">Max: {}</div>
+        </div>
+        <div class=\"row\">
+        <div class=\"p-2 col bd-highlight\">Source unit: {}</div>
+        <div class=\"p-2 col bd-highlight\">Signal ID: {}</div>
+        </div>
+        <div class=\"row\">
+        <div class=\"p-2 col bd-highlight\">Interval: {}</div>
+        <div class=\"p-2 col bd-highlight\">Category: {}</div>
+        </div>
+        <div class=\"row\">
+        <div class=\"p-2 col bd-highlight\"><h3>States</h3>{}</div>
+        </div>
+        <div class=\"row\">
+        <div class=\"p-2 col bd-highlight\">Msg ID: {:#X}</div>
+        <div class=\"p-2 col bd-highlight\">Msg Name: {}</div
+        </div>
+</summary>",
+        signal.name,
+        signal.start_bit,
+        signal.bit_length,
+        signal.factor,
+        signal.offset,
+        signal.min,
+        signal.max,
+        signal.source_unit,
+        signal.sig_id,
+        signal.interval,
+        signal.category,
+        get_table_for_states(&signal.states),
+        signal.msg_id,
+        signal.msg_name
+    );
+    details
+}
