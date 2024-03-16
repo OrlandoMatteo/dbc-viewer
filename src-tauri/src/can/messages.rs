@@ -1,3 +1,6 @@
+use crate::can::signals::get_details_from_signal;
+use crate::can::signals::search_signal;
+use crate::can::signals::Signal;
 use serde::Deserialize;
 use serde_json::json;
 
@@ -132,6 +135,7 @@ pub fn get_card_from_message(message: &Message) -> String {
         );
         signal_str.push_str(&sig_li)
     }
+    signal_str.push_str("</ul>");
 
     let card = format!(
         "<div class=\"card\">
@@ -140,7 +144,7 @@ pub fn get_card_from_message(message: &Message) -> String {
         <div class=\"bd-highlight mb-3\">
         <div class=\"p-2 bd-highlight\">CAN ID: {:#X}</div>
         <div class=\"p-2 bd-highlight\">PGN: {}</div>
-        <div class=\"p-2 bd-highlight\">Signals: {}</div
+        <div class=\"p-2 bd-highlight\">Signals: {}</div>
         </div>
     </div>
 </div>",
@@ -156,4 +160,30 @@ pub fn search_message(messages: &Vec<Message>, query: &str) -> Option<Message> {
         }
     }
     None
+}
+pub fn get_details_from_message(message: &Message, signals: &Vec<Signal>) -> String {
+    let mut signal_str = format!("<div class=\"accordion\" id=\"{}\">", message.name);
+    for signal in &message.signals {
+        let signal_struct = search_signal(signals, signal).unwrap();
+        signal_str.push_str(&get_details_from_signal(
+            &signal_struct,
+            message.name.clone(),
+        ))
+    }
+    signal_str.push_str("</div>");
+
+    let details = format!(
+        "<div class=\"accordion-item border-bottom-0\">
+            <button class=\"accordion-button collapsed\" type=\"button\" data-bs-toggle=\"collapse\" data-bs-target=\"#{}\" aria-expanded=\"false\" aria-controls=\"{}\">{}</button>
+                <div id=\"{}\" class=\"accordion-collapse collapse\" data-bs-parent=\"#messagesAccordion\">
+                    <div class=\"accordion-body border border-message\">
+                        <div class=\"bd-highlight mb-3\">
+                            <div class=\"p-2 bd-highlight\">CAN ID: {:#X}</div>
+                            <div class=\"p-2 bd-highlight\">PGN: {}</div>
+                            <div class=\"p-2 bd-highlight\">Signals: {}</div>
+                        </div>
+                    </div>
+                </div>
+        </div>",message.name,message.name,message.name,message.name,message.can_id,message.pgn,signal_str);
+    details
 }
