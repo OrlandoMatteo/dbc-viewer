@@ -101,7 +101,7 @@ pub fn parse_dbc(dbc_string: &String) -> (Vec<Message>, Vec<Signal>) {
                 // ... (parse VAL_ line details)
             }
             "BA_" => {
-                if tokens.len() == 5 {
+                if tokens.len() == 6 {
                     if tokens[1].contains("CI_SigId") {
                         match extract_signal_id(&tokens) {
                             Ok(sig_id) => {

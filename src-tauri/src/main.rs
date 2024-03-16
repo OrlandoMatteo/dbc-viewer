@@ -10,11 +10,7 @@ mod parser;
 
 use crate::can::signals::*;
 
-use crate::can::messages::get_card_from_message;
-use crate::can::messages::get_li_from_message;
-use crate::can::messages::search_message;
-use crate::can::messages::search_messages_by_name;
-use crate::can::messages::Message;
+use crate::can::messages::*;
 
 use crate::parser::parser::parse_dbc;
 
@@ -137,7 +133,10 @@ fn get_all_signals(app_state: tauri::State<AppState>) -> String {
     let mut html = String::from("<div class=\"accordion\" id=\"signalsAccordion\">");
     if state_sig.len() > 0 {
         for result in state_sig.iter() {
-            html.push_str(&format!("{}", get_details_from_signal(result)));
+            html.push_str(&format!(
+                "{}",
+                get_details_from_signal(result, String::from("signalsAccordion")).clone()
+            ));
         }
     }
     html.push_str("</div>");
@@ -146,13 +145,14 @@ fn get_all_signals(app_state: tauri::State<AppState>) -> String {
 #[tauri::command]
 fn get_all_messages(app_state: tauri::State<AppState>) -> String {
     let state_mex = app_state.messages.lock().unwrap();
-    let mut html = String::from("<ul class=\"list-group\">");
+    let state_sig = app_state.signals.lock().unwrap();
+    let mut html = String::from("<div class=\"accordion\" id=\"messagesAccordion\">");
     if state_mex.len() > 0 {
         for result in state_mex.iter() {
-            html.push_str(&format!("{}", get_li_from_message(result)));
+            html.push_str(&format!("{}", get_details_from_message(result, &state_sig)));
         }
     }
-    html.push_str("</ul>");
+    html.push_str("</div>");
     html
 }
 

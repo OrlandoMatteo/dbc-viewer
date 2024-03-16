@@ -75,6 +75,11 @@ async function load_dbc(file, filename) {
   }
   else if (page == "message.html") {
     get_all_messages()
+    var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+    var popoverList = popoverTriggerList.map(function(popoverTriggerEl) {
+      return new bootstrap.Popover(popoverTriggerEl)
+    })
+
   }
 }
 async function get_all_signals() {
@@ -82,7 +87,6 @@ async function get_all_signals() {
   document.getElementById("page").innerHTML = await invoke("get_all_signals");
 }
 async function get_all_messages() {
-  show_spinner()
   document.getElementById("page").innerHTML = await invoke("get_all_messages");
 }
 
