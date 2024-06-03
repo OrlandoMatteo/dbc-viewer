@@ -1,6 +1,6 @@
 use crate::can::signals::Signal;
 use crate::can::signals::State;
-pub fn split_can_id(can_id: i64) -> Result<(bool, u16, u64, u16), String> {
+pub fn split_can_id(can_id: u64) -> Result<(bool, u16, u64, u16), String> {
     let is_extended_frame = can_id > 0xffff;
     let mut priority = 0;
     let mut pgn = 0;
@@ -22,7 +22,7 @@ pub fn extract_signal_data(
     label_prefix: String,
     message_name: String,
     index: usize,
-    can_id: i64,
+    can_id: u64,
 ) -> Result<Signal, String> {
     // Handle multiplexor field
     //let multi_item = line[2];

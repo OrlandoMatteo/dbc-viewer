@@ -42,7 +42,7 @@ pub fn parse_dbc(dbc_string: &String) -> (Vec<Message>, Vec<Signal>) {
                 let mut name = String::from(tokens[2]);
                 name.truncate(name.len() - 1);
                 let dlc_str = tokens[3];
-                let can_id: i64 = can_id_str.parse::<i64>().unwrap() & 0x1fffffff;
+                let can_id: u64 = can_id_str.parse::<u64>().unwrap() & 0x1fffffff;
                 // Parse DLC
                 let dlc = dlc_str.parse::<u16>().unwrap();
                 // Split CAN ID (optional)
