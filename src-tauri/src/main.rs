@@ -1,7 +1,10 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use base64::decode;
 use base64::{engine::general_purpose, Engine as _};
+use encoding_rs;
+use std::convert::TryInto;
 use std::env;
 use std::sync::Mutex;
 // import the functions from can/engine.rs
@@ -43,16 +46,24 @@ fn search(query: &str, app_state: tauri::State<AppState>) -> String {
     println!("Searching for: {}", query);
     let signals = app_state.signals.lock().unwrap();
     let signal_result: Vec<Signal> = search_signals(&signals, &query);
+    let id_signal_result: Vec<Signal> = search_signals_by_id(&signals, &query);
     println!("FOUND: {:?}  signals", signal_result.len());
     let messages = app_state.messages.lock().unwrap();
     let message_result: Vec<Message> = search_messages_by_name(&messages, &query);
+    let hex_message_result: Vec<Message> = search_messages_by_id(&messages, &query);
     println!("FOUND: {:?}  signals", signal_result.len());
     // format the results to an html list
     let mut html = String::from("<ul class=\"list-group\">");
     for result in signal_result.iter() {
         html.push_str(&format!("{}", get_li_from_signal(result)));
     }
+    for result in id_signal_result.iter() {
+        html.push_str(&format!("{}", get_li_from_signal(result)));
+    }
     for result in message_result.iter() {
+        html.push_str(&format!("{}", get_li_from_message(result)));
+    }
+    for result in hex_message_result.iter() {
         html.push_str(&format!("{}", get_li_from_message(result)));
     }
     html.push_str("</ul>");
@@ -83,10 +94,11 @@ fn show_message(query: &str, app_state: tauri::State<AppState>) -> String {
 #[tauri::command]
 fn upload_dbc(base64_data: String, filename: String, app_state: tauri::State<AppState>) -> String {
     // Make the HTTP request in an asynchronous context
-    let bytes = general_purpose::STANDARD.decode(base64_data).unwrap();
-    let response = match String::from_utf8(bytes) {
+
+    let response = match general_purpose::STANDARD.decode(base64_data) {
         Ok(v) => {
-            let (messages, signals) = parse_dbc(&v);
+            let (decoded_string, _, _) = encoding_rs::WINDOWS_1252.decode(&v);
+            let (messages, signals) = parse_dbc(&decoded_string.into_owned());
             let mut state_mex = app_state.messages.lock().unwrap();
             let mut state_sig = app_state.signals.lock().unwrap();
             let mut state_filename = app_state.filename.lock().unwrap();

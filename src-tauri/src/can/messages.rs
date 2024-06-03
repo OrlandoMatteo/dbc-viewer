@@ -1,3 +1,5 @@
+use std::num::ParseIntError;
+
 use crate::can::signals::get_details_from_signal;
 use crate::can::signals::search_signal;
 use crate::can::signals::Signal;
@@ -7,7 +9,7 @@ use serde_json::json;
 #[derive(Debug, Deserialize, Clone)]
 pub struct Message {
     #[serde(default = "default_u64")]
-    pub can_id: i64,
+    pub can_id: u64,
     pub pgn: u64,
     pub source: u16,
     pub name: String,
@@ -17,18 +19,21 @@ pub struct Message {
     pub is_extended_frame: bool,
     pub dlc: u16,
     pub comment: Option<String>,
-    #[serde(default = "default_u64")]
+    #[serde(default = "default_i64")]
     pub line_in_dbc: i64,
     pub problems: Vec<Problem>,
     pub signals: Vec<String>,
 }
-fn default_u64() -> i64 {
+fn default_u64() -> u64 {
+    0
+}
+fn default_i64() -> i64 {
     0
 }
 impl Message {
     pub fn new() -> Message {
         Message {
-            can_id: -1,
+            can_id: 0,
             pgn: 0,
             source: 0,
             name: String::from(""),
@@ -75,12 +80,15 @@ pub fn search_messages_by_name(messages: &Vec<Message>, query: &str) -> Vec<Mess
 }
 pub fn search_messages_by_id(messages: &Vec<Message>, query: &str) -> Vec<Message> {
     let mut result: Vec<Message> = Vec::new();
-    for i in messages.iter() {
-        // th
-        // if the id of the signal contains the query, ignore case
-        if i.can_id == query.parse::<i64>().unwrap() {
-            result.push(i.clone());
+    match is_valid_hexadecimal(query) {
+        Ok(hex_num) => {
+            for i in messages.iter() {
+                if i.can_id == hex_num {
+                    result.push(i.clone());
+                }
+            }
         }
+        Err(_) => {}
     }
     result
 }
@@ -186,4 +194,14 @@ pub fn get_details_from_message(message: &Message, signals: &Vec<Signal>) -> Str
                 </div>
         </div>",message.name,message.name,message.name,message.name,message.can_id,message.pgn,signal_str);
     details
+}
+
+fn is_valid_hexadecimal(s: &str) -> Result<u64, ParseIntError> {
+    if s.len() > 2 && s.starts_with("0x") {
+        // If the string starts with "0x", skip those characters
+        u64::from_str_radix(&s[2..], 16)
+    } else {
+        // Otherwise, parse the string directly
+        u64::from_str_radix(s, 16)
+    }
 }

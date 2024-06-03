@@ -163,6 +163,23 @@ pub fn search_signals(signals: &Vec<Signal>, query: &str) -> Vec<Signal> {
     result
 }
 
+pub fn search_signals_by_id(signals: &Vec<Signal>, query: &str) -> Vec<Signal> {
+    let mut result: Vec<Signal> = Vec::new();
+    match i32::from_str_radix(query, 10) {
+        Ok(num) => {
+            for i in signals.iter() {
+                // if the name of the signal contains the query, ignore case
+                if i.sig_id == num {
+                    result.push(i.clone());
+                }
+            }
+        }
+        Err(_) => {}
+    }
+
+    result
+}
+
 // search a signal by its name
 pub fn search_signal(signals: &Vec<Signal>, query: &str) -> Option<Signal> {
     for i in signals.iter() {
