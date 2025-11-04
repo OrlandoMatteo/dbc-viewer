@@ -167,6 +167,7 @@ fn get_all_messages(app_state: tauri::State<AppState>) -> String {
     html
 }
 
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
 fn main() {
     // Create the index
     let signals = Vec::new();

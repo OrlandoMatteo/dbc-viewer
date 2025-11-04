@@ -135,7 +135,7 @@ pub fn get_li_from_signal(signal: &Signal) -> String {
         //    }});
         //let newTab = event.target
         //newTab.classList.add('active')\"
-        "<li class=\"p-2 list-group-item\" onClick=\"get_signal('{}')\">{}<span class=\"badge rounded-pill bg-signal float-right\">S</span></li> ",
+        "<li class=\"p-2 list-group-item\" onClick=\"get_signal('{}')\"><span class=\"badge rounded-pill bg-signal float-right\">S</span> {}</li> ",
         signal.name, signal.name
     );
     li
