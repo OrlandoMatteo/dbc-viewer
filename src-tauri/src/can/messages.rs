@@ -126,7 +126,7 @@ pub fn get_li_from_message(message: &Message) -> String {
     //        class=\"p-2 list-group-item\" hx-post=\"command:show_message\" name=query hx-vals={} hx-target=\"#signal_card\" hx-swap=innerHTML  >{}</li>
     //    ",
     let li = format!(
-        "<li class=\"p-2 list-group-item\" onClick=\"get_message('{}')\">{}<span class=\"badge rounded-pill bg-message float-right\">M</span></li> ",
+        "<li class=\"p-2 list-group-item\" onClick=\"get_message('{}')\"><span class=\"badge rounded-pill bg-message float-right\">M </span>{}</li> ",
         message.name, message.name
     );
     li

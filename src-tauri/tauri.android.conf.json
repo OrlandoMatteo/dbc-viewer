@@ -1,0 +1,38 @@
+{
+  "productName": "dbc_viewer",
+  "version": "0.3.0",
+  "identifier": "dbc-viewer.orlando.tauri.dev",
+  "build": {
+    "frontendDist": "../src"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "title": "dbc-viewer",
+        "width": 1080,
+        "height": 920
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/dbc-viewer.png",
+      "icons/icon.icns",
+      "icons/dbc-viewer.ico"
+    ]
+  },
+  "plugins": {
+    "shell": {
+      "open": true,
+      "scope": [
+        "shell:allow-open"
+      ]
+    }
+  }
+}

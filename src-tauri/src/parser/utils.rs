@@ -24,25 +24,6 @@ pub fn extract_signal_data(
     index: usize,
     can_id: u64,
 ) -> Result<Signal, String> {
-    // Handle multiplexor field
-    //let multi_item = line[2];
-    //let (is_multiplexor, multiplexer_value) = match multi_item.len() {
-    //    9 if multi_item.chars().nth(3) == Some(':') => {
-    //        let raw_multiplexer = multi_item.chars();
-    //        if raw_multiplexer.nth(0) == Some('M') {
-    //            (true, None)
-    //        } else if raw_multiplexer.nth(0).unwrap() == 'm' {
-    //            let value: u32 = raw_multiplexer
-    //                .skip(1)
-    //                .map(|c| c.to_digit(10).unwrap() as u32)
-    //                .collect();
-    //            (true, Some(value))
-    //        } else {
-    //            return Err(format!("Error parsing multiplexer: {}", line[2]));
-    //        }
-    //    }
-    //    _ => (false, None),
-    //};
     let line: Vec<&str> = _line.split_whitespace().collect();
     let name: String = String::from(line[1]);
     // Parse remaining fields

@@ -5,6 +5,7 @@ let greetMsgEl;
 let signal_card;
 
 
+
 function triggerFileUpload() {
   document.getElementById('file-input').click();
 }
@@ -15,6 +16,9 @@ async function greet() {
 
   if (greetInputEl.value.length > 2)
     greetMsgEl.innerHTML = await invoke("search", { query: greetInputEl.value });
+  items = [...document.querySelectorAll(".list-group-item")];
+  currentPage = 1
+  render()
   let results = document.querySelectorAll('.list-group-item')
 
   results.forEach(function(elem) {
@@ -108,6 +112,19 @@ window.onload = () => {
 window.addEventListener("DOMContentLoaded", () => {
   greetInputEl = document.querySelector("#signal-input");
   greetMsgEl = document.querySelector("#results");
+  document.getElementById("nextBtn").onclick = () => {
+    if (currentPage * pageSize < items.length) {
+      currentPage++;
+      render();
+    }
+  };
+
+  document.getElementById("prevBtn").onclick = () => {
+    if (currentPage > 1) {
+      currentPage--;
+      render();
+    }
+  };
   let signal_input = document.querySelector("#signal-input")
   if (signal_input) {
     signal_input.addEventListener("keyup", (e) => {
@@ -149,5 +166,18 @@ function show_spinner() {
   <span class="visually-hidden">Loading...</span>
 </div>`
 }
+
+const pageSize = 15;
+let currentPage = 1;
+
+let items;
+
+function render() {
+  items.forEach((li, i) => {
+    li.style.display = (i >= (currentPage-1)*pageSize && i < currentPage*pageSize)
+        ? "flex" : "none";
+  });
+}
+
 
 
