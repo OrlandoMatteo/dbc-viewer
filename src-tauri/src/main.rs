@@ -1,11 +1,16 @@
 // Prevents an additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use std::string::ParseError;
 use base64::{engine::general_purpose, Engine as _};
 use encoding_rs;
 use std::convert::TryInto;
 use std::env;
 use std::sync::Mutex;
+use serde::{Deserialize, Serialize};
+use strum_macros::EnumString;
+use std::str::FromStr;
+
 // import the functions from can/engine.rs
 mod can;
 mod parser;
@@ -18,11 +23,18 @@ use crate::parser::parser::parse_dbc;
 
 use serde_json::json;
 
+#[derive(Debug, EnumString)]
+enum HistoryCommand {
+    Prev,
+    Next,
+}
 // Create a struct to hold the index and signals
 struct AppState {
     signals: Mutex<Vec<Signal>>,
     messages: Mutex<Vec<Message>>,
     filename: Mutex<String>,
+    viewHistory: Mutex<Vec<String>>,
+    historyIndex: Mutex<i32>,
 }
 impl AppState {
     fn new(signals: Vec<Signal>, messages: Vec<Message>) -> Self {
@@ -30,6 +42,8 @@ impl AppState {
             signals: Mutex::new(signals),
             messages: Mutex::new(messages),
             filename: Mutex::from(String::from("")),
+            viewHistory: Mutex::from(Vec::new()),
+            historyIndex: Mutex::new(0),
         }
     }
 }
@@ -75,7 +89,14 @@ fn show_signal(query: &str, app_state: tauri::State<AppState>) -> String {
     let result = search_signal(&signals, &query);
     println!("Signal: {:?}", result);
     match result {
-        Some(signal) => format!("{}", get_card_from_signal(&signal)),
+        Some(signal) => {
+            let signal_string = format!("{}", get_card_from_signal(&signal));
+            app_state.viewHistory.lock().unwrap().push(signal_string.clone());
+            let mut history = app_state.viewHistory.lock().unwrap();
+            let mut index = app_state.historyIndex.lock().unwrap();
+            *index = history.len() as i32 - 1;
+            signal_string
+        }
         None => "Signal not found".to_string(),
     }
 }
@@ -86,7 +107,14 @@ fn show_message(query: &str, app_state: tauri::State<AppState>) -> String {
     let result = search_message(&messages, &query);
     println!("Messages: {:?}", result);
     match result {
-        Some(message) => format!("{}", get_card_from_message(&message)),
+        Some(message) => {
+            let message_string = format!("{}", get_card_from_message(&message));
+            app_state.viewHistory.lock().unwrap().push(message_string.clone());
+            let mut history = app_state.viewHistory.lock().unwrap();
+            let mut index = app_state.historyIndex.lock().unwrap();
+            *index = history.len() as i32 - 1;
+            message_string
+        }
         None => "Signal not found".to_string(),
     }
 }
@@ -167,6 +195,24 @@ fn get_all_messages(app_state: tauri::State<AppState>) -> String {
     html
 }
 
+#[tauri::command]
+fn handle_history(query: &str, app_state: tauri::State<AppState>) -> String {
+    let mut index = app_state.historyIndex.lock().unwrap();
+    let view_history = app_state.viewHistory.lock().unwrap();
+
+    match query {
+        "Prev" if *index > 0 => *index -= 1,
+        "Next" if *index < (view_history.len() as i32 - 1) => *index += 1,
+        _ => {}
+    }
+
+    // Clone the result *inside the same lock scope*
+    let i = *index as usize;
+    let output = view_history[i].clone();
+    println!("query = {}, new index = {} ,{}", query, i, output);
+    return output;
+}
+
 fn main() {
     // Create the index
     let signals = Vec::new();
@@ -187,6 +233,7 @@ fn main() {
             is_dbc_loaded,
             get_all_signals,
             get_all_messages,
+            handle_history,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
