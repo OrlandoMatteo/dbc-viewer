@@ -4,7 +4,17 @@ let greetInputEl;
 let greetMsgEl;
 let signal_card;
 
+async function prevHist(){
+  console.log("Sending Prev command...");
+  const html = await invoke("handle_history", { query: "Prev" });
+  console.log("Received response:", html.substring(0, 100)); // show start only
+  document.getElementById("signal_card").innerHTML = html;
 
+}
+async function nextHist (){
+  signal_card = document.querySelector("#signal_card");
+  signal_card.innerHTML = await invoke("handle_history", {query:"Next"});
+}
 
 function triggerFileUpload() {
   document.getElementById('file-input').click();
@@ -38,10 +48,12 @@ async function greet() {
 
 async function show_signal(name) {
   signal_card.innerHTML = await invoke("show_signal", { query: name });
+  signal_card = document.querySelector("#signal_card");
 }
 
 async function show_message(name) {
   signal_card.innerHTML = await invoke("show_message", { query: name });
+  signal_card = document.querySelector("#signal_card");
 }
 
 async function is_dbc_loaded() {
@@ -133,7 +145,16 @@ window.addEventListener("DOMContentLoaded", () => {
     });
     is_dbc_loaded();
   }
+  // document.getElementById("prevHist").onclick = () => {
+  //   prevHist();
+  // };
+  //
+  // document.getElementById("nextHist").onclick = () => {
+  //   nextHist();
+  // };
+
 });
+
 
 
 
@@ -167,7 +188,7 @@ function show_spinner() {
 </div>`
 }
 
-const pageSize = 15;
+const pageSize = 10;
 let currentPage = 1;
 
 let items;

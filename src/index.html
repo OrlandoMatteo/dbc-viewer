@@ -32,9 +32,13 @@
     <div class="row">
         <div class="py-2">
             <input type="file" id="file-input" hidden accept="*">
-            <button type="button" class="btn btn-primary" onclick="triggerFileUpload()">Select dbc File</button>
+            <div class="d-flex justify-content-start gap-4 ">
+                <div >
+                    <button type="button" class="btn btn-primary py-2" onclick="triggerFileUpload()">Select dbc File</button>
+                </div>
+                <div id="filename" class="alert alert-light py-2 flex-fill" role="alert"></div>
+            </div>
         </div>
-        <div id="filename" class="py-2 alert alert-light" role="alert"></div>
     </div>
     <ul class="nav nav-tabs ">
         <li class="nav-item">
@@ -57,17 +61,24 @@
             <div class="py-2">
                 <h3>Results</h3>
             </div>
-            <div class="py-4" id="results" style="height: 64vh;">
+            <div class="py-4" id="results">
             </div>
             <button id="prevBtn" type="button" class="btn btn-outline-primary">Prev</button>
             <button id="nextBtn" type="button" class="btn btn-outline-primary">Next</button>
         </div>
         <div class="col-6">
             <h2>View</h2>
+            <div>
+                <button id="prevHist" type="button" class="btn btn-outline-primary" onclick="prevHist()"><span
+                        aria-hidden="true">&laquo;</span></button>
+                <button id="nextHist" type="button" class="btn btn-outline-primary" onclick="nextHist()"><span
+                        aria-hidden="true">&raquo;</span></button>
+            </div>
             <p></p>
             <div id="signal_card"></div>
         </div>
     </div>
+</div>
 </body>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
