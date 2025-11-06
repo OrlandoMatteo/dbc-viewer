@@ -1,4 +1,52 @@
 const { invoke } = window.__TAURI__.core;
+const { listen } = window.__TAURI__.event;
+
+// Register listener IMMEDIATELY
+(async () => {
+  console.log('🔧 Registering file-open listener...');
+
+  await listen('file-open', async (event) => {
+    console.log('🎯 FILE OPEN EVENT RECEIVED:', event.payload);
+
+    const { path, filename } = event.payload;
+
+    try {
+      console.log('📂 Loading file:', filename);
+
+      // Call the Rust function to load the file
+      const result = await invoke('load_file_from_path', { path: path });
+      const response = JSON.parse(result);
+
+      console.log('📊 Load result:', response);
+
+      // Update the UI
+      if (response.code === 200) {
+        document.getElementById('filename').innerHTML = `✅ ${response.message}`;
+        document.getElementById('filename').classList.remove('alert-light', 'alert-danger');
+        document.getElementById('filename').classList.add('alert-success');
+
+        // Refresh current page if on signals or messages view
+        const path = window.location.pathname;
+        const page = path.split("/").pop();
+        if (page === "signals.html") {
+          await get_all_signals();
+        } else if (page === "message.html") {
+          await get_all_messages();
+        }
+      } else {
+        document.getElementById('filename').innerHTML = `❌ ${response.message}`;
+        document.getElementById('filename').classList.remove('alert-light', 'alert-success');
+        document.getElementById('filename').classList.add('alert-danger');
+      }
+
+    } catch (error) {
+      console.error('❌ Error loading file:', error);
+      alert('Failed to load file: ' + error);
+    }
+  });
+
+  console.log('✅ File open listener registered');
+})();
 
 let greetInputEl;
 let greetMsgEl;
