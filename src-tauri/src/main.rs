@@ -10,6 +10,7 @@ use std::sync::Mutex;
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumString;
 use std::str::FromStr;
+use tauri::Emitter;
 
 // import the functions from can/engine.rs
 mod can;
@@ -212,6 +213,35 @@ fn handle_history(query: &str, app_state: tauri::State<AppState>) -> String {
     println!("query = {}, new index = {} ,{}", query, i, output);
     return output;
 }
+#[tauri::command]
+fn load_file_from_path(path: String, app_state: tauri::State<AppState>) -> String {
+    println!("📂 Loading file from path: {}", path);
+
+    match std::fs::read(&path) {
+        Ok(contents) => {
+            let base64_data = general_purpose::STANDARD.encode(&contents);
+
+            // Get filename from path
+            let filename = std::path::Path::new(&path)
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string();
+
+            println!("📄 Filename: {}", filename);
+
+            // Reuse your existing upload_dbc logic
+            upload_dbc(base64_data, filename, app_state)
+        }
+        Err(e) => {
+            let response = json!({
+                "code": 500,
+                "message": format!("Failed to read file: {}", e)
+            });
+            response.to_string()
+        }
+    }
+}
 
 fn main() {
     // Create the index
@@ -234,7 +264,52 @@ fn main() {
             get_all_signals,
             get_all_messages,
             handle_history,
+            load_file_from_path,
         ])
+        .setup(|app| {
+            println!("🚀 App setup starting...");
+            let handle = app.handle().clone();
+
+            let args: Vec<String> = env::args().collect();
+            println!("📋 Command line args: {:?}", args);
+
+            if args.len() > 1 {
+                let file_path = args[1].clone();
+                println!("📂 Argument 1: {}", file_path);
+
+                if file_path.ends_with(".dbc") {
+                    println!("✅ Valid .dbc file detected");
+
+                    // Get just the filename for the event
+                    let filename = std::path::Path::new(&file_path)
+                        .file_name()
+                        .unwrap_or_default()
+                        .to_string_lossy()
+                        .to_string();
+
+                    std::thread::spawn(move || {
+                        println!("⏳ Waiting 500ms before emit...");
+                        std::thread::sleep(std::time::Duration::from_millis(500));
+                        println!("🚀 Emitting file-open event with filename: {}", filename);
+
+                        match handle.emit("file-open", json!({
+                    "path": file_path,
+                    "filename": filename
+                })) {
+                            Ok(_) => println!("✅ Event emitted successfully"),
+                            Err(e) => println!("❌ Failed to emit event: {:?}", e),
+                        }
+                    });
+                } else {
+                    println!("⚠️ File doesn't end with .dbc: {}", file_path);
+                }
+            } else {
+                println!("ℹ️ No command line arguments provided");
+            }
+
+            println!("✅ App setup complete");
+            Ok(())
+        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
