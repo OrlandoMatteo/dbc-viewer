@@ -51,7 +51,7 @@
             <a class="nav-link" href="/signals.html">Explore signals</a>
         </li>
     </ul>
-    <div class="row py-2">
+    <div class="row py-2 divide-indigo-500">
         <div class="col-6">
             <div class="py-2">
                 <h2>Search</h2>
@@ -60,13 +60,14 @@
             <hr>
             <div class="py-2">
                 <h3>Results</h3>
+                <button id="prevBtn" type="button" class="btn btn-outline-primary">Prev</button>
+                <button id="nextBtn" type="button" class="btn btn-outline-primary">Next</button>
+                <span id="pageNumber"><span>
             </div>
-            <div class="py-4" id="results">
+            <div class="py-4" style = "min-height:42vh" id="results">
             </div>
-            <button id="prevBtn" type="button" class="btn btn-outline-primary">Prev</button>
-            <button id="nextBtn" type="button" class="btn btn-outline-primary">Next</button>
         </div>
-        <div class="col-6">
+        <div class="col-6" style="border-left-style:groove;border-left-color:#0d6efd">
             <h2>View</h2>
             <div>
                 <button id="prevHist" type="button" class="btn btn-outline-primary" onclick="prevHist()"><span

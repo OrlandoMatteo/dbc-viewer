@@ -1,0 +1,6 @@
+/src/main/java/dbc_viewer/orlando/tauri/dev/generated
+/src/main/jniLibs/**/*.so
+/src/main/assets/tauri.conf.json
+/tauri.build.gradle.kts
+/proguard-tauri.pro
+/tauri.properties

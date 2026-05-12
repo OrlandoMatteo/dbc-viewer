@@ -75,7 +75,7 @@ async function greet() {
   if (greetInputEl.value.length > 2)
     greetMsgEl.innerHTML = await invoke("search", { query: greetInputEl.value });
   items = [...document.querySelectorAll(".list-group-item")];
-  currentPage = 1
+  document.getElementById('pageNumber').innerHTML = currentPage.toString()+" of " + Math.round(1+items.length/pageSize).toString();
   render()
   let results = document.querySelectorAll('.list-group-item')
 
@@ -177,6 +177,7 @@ window.addEventListener("DOMContentLoaded", () => {
       currentPage++;
       render();
     }
+    document.getElementById('pageNumber').innerHTML = currentPage.toString()+" of " + Math.round(1+items.length/pageSize).toString();
   };
 
   document.getElementById("prevBtn").onclick = () => {
@@ -184,6 +185,7 @@ window.addEventListener("DOMContentLoaded", () => {
       currentPage--;
       render();
     }
+    document.getElementById('pageNumber').innerHTML = currentPage.toString()+" of " + Math.round(1+items.length/pageSize).toString();
   };
   let signal_input = document.querySelector("#signal-input")
   if (signal_input) {
