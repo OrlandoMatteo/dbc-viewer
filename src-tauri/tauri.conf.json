@@ -1,6 +1,6 @@
     {
       "productName": "dbc-viewer",
-      "version": "0.4.2",
+      "version": "1.0.0",
       "identifier": "dbc-viewer.orlando.tauri.dev",
       "build": {
         "frontendDist": "../src"
