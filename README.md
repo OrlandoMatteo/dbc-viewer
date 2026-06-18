@@ -1,35 +1,37 @@
 # DBC Viewer
 
-A quick and dirty Tauri app for viewing and searching CAN DBC files. Yeah, the code is pretty ugly, but it works! 🚗
+A Tauri app for viewing and searching CAN DBC files.
 
-## What does it do?
+## What It Does
 
 This app lets you:
 - Upload and parse DBC (CAN database) files
-- Search for signals and messages by name
-- Browse through all messages in your DBC file
+- Search for signals and messages by name or ID
+- Browse through all messages in a DBC file
 - Explore individual signals and their properties
-- Navigate through search results with a history feature
+- Navigate through search result details with a history feature
 
 ## Tech Stack
 
 - **Frontend**: Vanilla HTML/CSS/JavaScript with Bootstrap 5
-- **Backend**: Rust with Tauri 2.5
-- **Parser**: Custom DBC file parser (in Rust)
+- **Backend**: Rust with Tauri 2
+- **Parser**: Custom DBC parser in Rust
 
-## Running the thing
+## Running
 
 Install dependencies and run:
+
 ```bash
-bun install 
+bun install
 bun run tauri dev
 ```
 
-If you want the exe
+Build the desktop app:
+
 ```bash
 bun run tauri build
 ```
 
 ## Note
 
-This is a work in progress. The code could definitely use some refactoring, but hey, it parses DBC files and displays them nicely! 🤷‍♂️
+This is a work in progress. The current focus is keeping the parser reliable and sharing the same Tauri entry point across desktop and mobile builds.
