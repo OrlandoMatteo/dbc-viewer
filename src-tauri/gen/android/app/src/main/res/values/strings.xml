@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">dbc_viewer</string>
+    <string name="main_activity_title">dbc_viewer</string>
+</resources>
