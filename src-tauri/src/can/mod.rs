@@ -1,2 +1,2 @@
-pub mod signals;
 pub mod messages;
+pub mod signals;

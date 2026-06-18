@@ -5,45 +5,75 @@
   <meta charset="UTF-8" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
     integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tauri App</title>
-  <script src="/main.js"></script>
   <link rel="stylesheet" href="./styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DBC Viewer</title>
+  <script src="/main.js" defer></script>
 </head>
 
-<body>
-  <div class="container">
-    <h1 class="display-1 p-4">Welcome to Dbc viewer</h1>
-    <div class="row">
-      <div class="py-2">
-        <input type="file" id="file-input" hidden accept="*">
-        <button type="button" class="btn btn-primary" onclick="triggerFileUpload()">Select File</button>
+<body data-page="messages">
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div>
+        <h1>DBC Viewer</h1>
+        <div class="app-subtitle">CAN database inspection workspace</div>
       </div>
-      <div id="filename" class="py-2 alert alert-light" role="alert"></div>
-    </div>
-    <ul class="nav nav-tabs ">
-      <li class="nav-item">
-        <a class="nav-link" href="/index.html">Search</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link active" href="#" aria-current="page">Explore messages</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="/signals.html">Explore signals</a>
-      </li>
-    </ul>
-    <div class="row py-2" id="page">
-    </div>
+      <div class="app-actions">
+        <input type="file" id="file-input" hidden accept=".dbc,*">
+        <button type="button" class="btn btn-primary" onclick="triggerFileUpload()">Open DBC</button>
+        <div id="filename" class="file-status" role="status">No DBC loaded</div>
+        <button id="warning-toggle" type="button" class="btn btn-outline-warning btn-sm d-none"
+          data-bs-toggle="collapse" data-bs-target="#warning-panel" aria-expanded="false"
+          aria-controls="warning-panel">
+          Warnings <span id="warning-count" class="badge bg-warning text-dark">0</span>
+        </button>
+      </div>
+    </header>
+
+    <nav class="app-nav" aria-label="Main navigation">
+      <a href="/index.html">Search</a>
+      <a class="active" href="/messages.html">Messages</a>
+      <a href="/signals.html">Signals</a>
+    </nav>
+
+    <section id="warning-panel" class="collapse warning-panel"></section>
+
+    <main class="row g-3 app-workspace">
+      <section class="col-12 col-xl-7">
+        <div class="tool-panel">
+          <div class="panel-header">
+            <div>
+              <h2>Messages</h2>
+              <div class="panel-caption">Browse message frames and open one for details.</div>
+            </div>
+            <span id="browse-count" class="text-muted">0 messages</span>
+          </div>
+          <input id="browse-filter" class="form-control browse-filter" placeholder="Filter messages by name, CAN ID, PGN..." />
+          <div id="page" class="browse-table"></div>
+        </div>
+      </section>
+
+      <aside class="col-12 col-xl-5">
+        <div class="tool-panel inspector-panel">
+          <div class="panel-header">
+            <div>
+              <h2>Inspector</h2>
+              <div class="panel-caption">Select a message row to inspect it.</div>
+            </div>
+            <div class="btn-group">
+              <button id="prevHist" type="button" class="btn btn-outline-secondary btn-sm" onclick="prevHist()" disabled>&laquo;</button>
+              <button id="nextHist" type="button" class="btn btn-outline-secondary btn-sm" onclick="nextHist()" disabled>&raquo;</button>
+            </div>
+          </div>
+          <div id="signal_card" class="inspector-body"></div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+    crossorigin="anonymous"></script>
 </body>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
-  integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
-
-<script>
-  window.addEventListener("DOMContentLoaded", () => {
-    is_dbc_loaded();
-    get_all_messages();
-  });
-
-</script>
 
 </html>
