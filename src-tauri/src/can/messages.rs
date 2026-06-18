@@ -1,12 +1,10 @@
 use std::num::ParseIntError;
 
-use crate::can::signals::get_details_from_signal;
 use crate::can::signals::search_signal;
 use crate::can::signals::Signal;
-use serde::Deserialize;
-use serde_json::json;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Message {
     #[serde(default = "default_u64")]
     pub can_id: u64,
@@ -49,26 +47,14 @@ impl Message {
     }
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Problem {
     severity: String,
     line: usize,
     description: String,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct Messages {
-    messages: Vec<Message>,
-}
-
-pub fn get_messages(json: &str) -> Vec<Message> {
-    let data: Messages = serde_json::from_str(&json).unwrap();
-    let messages = data.messages;
-    println!("messages: {:?}", messages.len());
-    messages
-}
-
-pub fn search_messages_by_name(messages: &Vec<Message>, query: &str) -> Vec<Message> {
+pub fn search_messages_by_name(messages: &[Message], query: &str) -> Vec<Message> {
     let mut result: Vec<Message> = Vec::new();
     for i in messages.iter() {
         // if the name of the signal contains the query, ignore case
@@ -78,7 +64,7 @@ pub fn search_messages_by_name(messages: &Vec<Message>, query: &str) -> Vec<Mess
     }
     result
 }
-pub fn search_messages_by_id(messages: &Vec<Message>, query: &str) -> Vec<Message> {
+pub fn search_messages_by_id(messages: &[Message], query: &str) -> Vec<Message> {
     let mut result: Vec<Message> = Vec::new();
     match is_valid_hexadecimal(query) {
         Ok(hex_num) => {
@@ -92,75 +78,7 @@ pub fn search_messages_by_id(messages: &Vec<Message>, query: &str) -> Vec<Messag
     }
     result
 }
-pub fn search_messages_by_signal(messages: &Vec<Message>, query: &str) -> Vec<Message> {
-    let mut result: Vec<Message> = Vec::new();
-    for i in messages.iter() {
-        // th
-        // check all the signals in the message
-        for s in i.signals.iter() {
-            // if the name of the signal contains the query, ignore case
-            if s.to_lowercase().contains(&query.to_lowercase()) {
-                result.push(i.clone());
-            }
-        }
-    }
-    result
-}
-
-pub fn get_li_from_message(message: &Message) -> String {
-    // create a list item with the message data
-    // the item should have hx-id attribute with the message name
-    // the item should have hx-get attribute with the message name
-    // the item should have hx-target attribute with the id signal_card
-    let _query_value = json!({"query":message.name});
-    //let li = format!(
-    //    "<li
-    //    hx-on:click=\"
-    //    var items = document.querySelectorAll('.list-group-item');
-    //    // Loop through each element and remove the 'active' class
-    //    items.forEach(function(item) {{
-    //    item.classList.remove('active');
-    //        }});
-    //    let newTab = event.target
-    //    newTab.classList.add('active')\"
-    //        class=\"p-2 list-group-item\" hx-post=\"command:show_message\" name=query hx-vals={} hx-target=\"#signal_card\" hx-swap=innerHTML  >{}</li>
-    //    ",
-    let li = format!(
-        "<li class=\"p-2 list-group-item\" onClick=\"get_message('{}')\">✉️{}</li> ",
-        message.name, message.name
-    );
-    li
-}
-
-pub fn get_card_from_message(message: &Message) -> String {
-    // create a card with the signal data
-
-    let mut signal_str = String::from("<ul class=\"list-group\">");
-    for signal in &message.signals {
-        let sig_li = format!(
-            "<li class=\"list-group-item\" ><a class=\"link-primary\" onClick=\"get_signal('{}')\">{}</a></li>",
-            signal, signal
-        );
-        signal_str.push_str(&sig_li)
-    }
-    signal_str.push_str("</ul>");
-
-    let card = format!(
-        "<div class=\"card\">
-    <div class=\"card-body\">
-        <h5 class=\"card-title\">✉️ {}</h5>
-        <div class=\"bd-highlight mb-3\">
-        <div class=\"p-2 bd-highlight\">CAN ID: {:#X}</div>
-        <div class=\"p-2 bd-highlight\">PGN: {}</div>
-        <div class=\"p-2 bd-highlight\">Signals: {}</div>
-        </div>
-    </div>
-</div>",
-        message.name, message.can_id, message.pgn, signal_str
-    );
-    card
-}
-pub fn search_message(messages: &Vec<Message>, query: &str) -> Option<Message> {
+pub fn search_message(messages: &[Message], query: &str) -> Option<Message> {
     for i in messages.iter() {
         // if the name of the signal contains the query, ignore case
         if i.name.to_lowercase() == query.to_lowercase() {
@@ -169,31 +87,13 @@ pub fn search_message(messages: &Vec<Message>, query: &str) -> Option<Message> {
     }
     None
 }
-pub fn get_details_from_message(message: &Message, signals: &Vec<Signal>) -> String {
-    let mut signal_str = format!("<div class=\"accordion\" id=\"{}\">", message.name);
-    for signal in &message.signals {
-        let signal_struct = search_signal(signals, signal).unwrap();
-        signal_str.push_str(&get_details_from_signal(
-            &signal_struct,
-            message.name.clone(),
-        ))
-    }
-    signal_str.push_str("</div>");
 
-    let details = format!(
-        "<div class=\"accordion-item border-bottom-0\">
-            <button class=\"accordion-button collapsed\" type=\"button\" data-bs-toggle=\"collapse\" data-bs-target=\"#{}\" aria-expanded=\"false\" aria-controls=\"{}\">{}</button>
-                <div id=\"{}\" class=\"accordion-collapse collapse\" data-bs-parent=\"#messagesAccordion\">
-                    <div class=\"accordion-body border border-message\">
-                        <div class=\"bd-highlight mb-3\">
-                            <div class=\"p-2 bd-highlight\">CAN ID: {:#X}</div>
-                            <div class=\"p-2 bd-highlight\">PGN: {}</div>
-                            <div class=\"p-2 bd-highlight\">Signals: {}</div>
-                        </div>
-                    </div>
-                </div>
-        </div>",message.name,message.name,message.name,message.name,message.can_id,message.pgn,signal_str);
-    details
+pub fn resolve_message_signals(message: &Message, signals: &[Signal]) -> Vec<Signal> {
+    message
+        .signals
+        .iter()
+        .filter_map(|signal_name| search_signal(signals, signal_name))
+        .collect()
 }
 
 fn is_valid_hexadecimal(s: &str) -> Result<u64, ParseIntError> {
@@ -203,5 +103,22 @@ fn is_valid_hexadecimal(s: &str) -> Result<u64, ParseIntError> {
     } else {
         // Otherwise, parse the string directly
         u64::from_str_radix(s, 16)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{resolve_message_signals, Message};
+    use crate::can::signals::Signal;
+
+    #[test]
+    fn missing_signal_references_resolve_to_empty_results() {
+        let mut message = Message::new();
+        message.signals.push("MissingSignal".to_string());
+        let signals: Vec<Signal> = Vec::new();
+
+        let resolved = resolve_message_signals(&message, &signals);
+
+        assert!(resolved.is_empty());
     }
 }

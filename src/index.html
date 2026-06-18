@@ -2,91 +2,96 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8"/>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
-          integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Tauri App</title>
-    <script src="/main.js"></script>
-    <style>
-        .display-1 {
-            font-weight: 500
-        }
-
-        .bg-signal {
-            background-color: #fd0d89 !important;
-        }
-
-        .float-righ {
-            float: right
-        }
-
-        .bg-message {
-            background-color: #a7fd0d !important;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+  <link rel="stylesheet" href="./styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DBC Viewer</title>
+  <script src="/main.js" defer></script>
 </head>
 
-<body>
-<div class="container">
-    <div class="row">
-        <div class="py-2">
-            <input type="file" id="file-input" hidden accept="*">
-            <div class="d-flex justify-content-start gap-4 ">
-                <div >
-                    <button type="button" class="btn btn-primary py-2" onclick="triggerFileUpload()">Select dbc File</button>
-                </div>
-                <div id="filename" class="alert alert-light py-2 flex-fill" role="alert"></div>
-            </div>
-        </div>
-    </div>
-    <ul class="nav nav-tabs ">
-        <li class="nav-item">
-            <a class="nav-link active" aria-current="page" href="#">Search</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="/messages.html">Explore messages</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="/signals.html">Explore signals</a>
-        </li>
-    </ul>
-    <div class="row py-2 divide-indigo-500">
-        <div class="col-6">
-            <div class="py-2">
-                <h2>Search</h2>
-                <input id="signal-input" class="form-control" name="query" placeholder="Enter a name..."/>
-            </div>
-            <hr>
-            <div class="py-2">
-                <h3>Results</h3>
-                <button id="prevBtn" type="button" class="btn btn-outline-primary">Prev</button>
-                <button id="nextBtn" type="button" class="btn btn-outline-primary">Next</button>
-                <span id="pageNumber"><span>
-            </div>
-            <div class="py-4" style = "min-height:42vh" id="results">
-            </div>
-        </div>
-        <div class="col-6" style="border-left-style:groove;border-left-color:#0d6efd">
-            <h2>View</h2>
+<body data-page="search">
+  <div class="app-shell">
+    <header class="app-topbar">
+      <div>
+        <h1>DBC Viewer</h1>
+        <div class="app-subtitle">CAN database inspection workspace</div>
+      </div>
+      <div class="app-actions">
+        <input type="file" id="file-input" hidden accept=".dbc,*">
+        <button type="button" class="btn btn-primary" onclick="triggerFileUpload()">Open DBC</button>
+        <div id="filename" class="file-status" role="status">No DBC loaded</div>
+        <button id="warning-toggle" type="button" class="btn btn-outline-warning btn-sm d-none"
+          data-bs-toggle="collapse" data-bs-target="#warning-panel" aria-expanded="false"
+          aria-controls="warning-panel">
+          Warnings <span id="warning-count" class="badge bg-warning text-dark">0</span>
+        </button>
+      </div>
+    </header>
+
+    <nav class="app-nav" aria-label="Main navigation">
+      <a class="active" href="/index.html">Search</a>
+      <a href="/messages.html">Messages</a>
+      <a href="/signals.html">Signals</a>
+    </nav>
+
+    <section id="warning-panel" class="collapse warning-panel"></section>
+
+    <main class="row g-3 app-workspace">
+      <section class="col-12 col-xl-5">
+        <div class="tool-panel">
+          <div class="panel-header">
             <div>
-                <button id="prevHist" type="button" class="btn btn-outline-primary" onclick="prevHist()"><span
-                        aria-hidden="true">&laquo;</span></button>
-                <button id="nextHist" type="button" class="btn btn-outline-primary" onclick="nextHist()"><span
-                        aria-hidden="true">&raquo;</span></button>
+              <h2>Search</h2>
+              <div class="panel-caption">Find messages and signals by name or ID.</div>
             </div>
-            <p></p>
-            <div id="signal_card"></div>
+          </div>
+
+          <div class="search-controls">
+            <input id="signal-input" class="form-control" name="query" placeholder="Search names, CAN IDs, signal IDs..." />
+            <div class="btn-group w-100" role="group" aria-label="Search result type">
+              <input type="radio" class="btn-check" name="search-kind" id="search-kind-all" value="all" checked>
+              <label class="btn btn-outline-secondary" for="search-kind-all">All</label>
+              <input type="radio" class="btn-check" name="search-kind" id="search-kind-message" value="message">
+              <label class="btn btn-outline-secondary" for="search-kind-message">Messages</label>
+              <input type="radio" class="btn-check" name="search-kind" id="search-kind-signal" value="signal">
+              <label class="btn btn-outline-secondary" for="search-kind-signal">Signals</label>
+            </div>
+          </div>
+
+          <div class="result-toolbar">
+            <span id="search-count" class="text-muted">0 results</span>
+            <div class="btn-group">
+              <button id="prevBtn" type="button" class="btn btn-outline-secondary btn-sm">Prev</button>
+              <button id="nextBtn" type="button" class="btn btn-outline-secondary btn-sm">Next</button>
+            </div>
+          </div>
+          <div id="results" class="result-list"></div>
         </div>
-    </div>
-</div>
+      </section>
+
+      <aside class="col-12 col-xl-7">
+        <div class="tool-panel inspector-panel">
+          <div class="panel-header">
+            <div>
+              <h2>Inspector</h2>
+              <div class="panel-caption">Open a result to inspect its decoded fields.</div>
+            </div>
+            <div class="btn-group">
+              <button id="prevHist" type="button" class="btn btn-outline-secondary btn-sm" onclick="prevHist()" disabled>&laquo;</button>
+              <button id="nextHist" type="button" class="btn btn-outline-secondary btn-sm" onclick="nextHist()" disabled>&raquo;</button>
+            </div>
+          </div>
+          <div id="signal_card" class="inspector-body"></div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+    crossorigin="anonymous"></script>
 </body>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
-        crossorigin="anonymous"></script>
-
-<script>
-
-</script>
 
 </html>

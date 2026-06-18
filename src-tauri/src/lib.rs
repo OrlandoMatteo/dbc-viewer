@@ -1,181 +1,281 @@
-// Prevents an additional console window on Windows in release, DO NOT REMOVE!!
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-
 use base64::{engine::general_purpose, Engine as _};
 use encoding_rs;
-use std::convert::TryInto;
+use serde::Serialize;
+use std::collections::HashSet;
 use std::env;
 use std::sync::Mutex;
-// import the functions from can/engine.rs
+use tauri::Emitter;
+
 mod can;
 mod parser;
 
-use crate::can::signals::*;
-
-use crate::can::messages::*;
-
+use crate::can::messages::{
+    resolve_message_signals, search_message, search_messages_by_id, search_messages_by_name,
+    Message,
+};
+use crate::can::signals::{search_signal, search_signals, search_signals_by_id, Signal};
 use crate::parser::parser::parse_dbc;
 
-use serde_json::json;
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct LoadResponse {
+    loaded: bool,
+    filename: Option<String>,
+    message: String,
+    warnings: Vec<String>,
+}
 
-// Create a struct to hold the index and signals
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct SearchResult {
+    kind: String,
+    name: String,
+    id: String,
+    label: String,
+}
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct MessageDetail {
+    message: Message,
+    signals: Vec<Signal>,
+}
+
+#[derive(Clone, Serialize)]
+#[serde(tag = "kind", content = "item", rename_all = "camelCase")]
+enum ViewItem {
+    Signal(Signal),
+    Message(MessageDetail),
+}
+
 struct AppState {
     signals: Mutex<Vec<Signal>>,
     messages: Mutex<Vec<Message>>,
-    filename: Mutex<String>,
+    filename: Mutex<Option<String>>,
+    parse_warnings: Mutex<Vec<String>>,
+    view_history: Mutex<Vec<ViewItem>>,
+    history_index: Mutex<Option<usize>>,
 }
+
 impl AppState {
-    fn new(signals: Vec<Signal>, messages: Vec<Message>) -> Self {
+    fn new() -> Self {
         Self {
-            signals: Mutex::new(signals),
-            messages: Mutex::new(messages),
-            filename: Mutex::from(String::from("")),
+            signals: Mutex::new(Vec::new()),
+            messages: Mutex::new(Vec::new()),
+            filename: Mutex::new(None),
+            parse_warnings: Mutex::new(Vec::new()),
+            view_history: Mutex::new(Vec::new()),
+            history_index: Mutex::new(None),
         }
     }
 }
 
 #[tauri::command]
 fn greet(name: &str) -> String {
-    println!("pippo");
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
 #[tauri::command]
-fn search(query: &str, app_state: tauri::State<AppState>) -> String {
-    println!("Searching for: {}", query);
+fn search(query: &str, app_state: tauri::State<AppState>) -> Vec<SearchResult> {
+    let query = query.trim();
+    if query.len() < 3 {
+        return Vec::new();
+    }
+
     let signals = app_state.signals.lock().unwrap();
-    let signal_result: Vec<Signal> = search_signals(&signals, &query);
-    let id_signal_result: Vec<Signal> = search_signals_by_id(&signals, &query);
-    println!("FOUND: {:?}  signals", signal_result.len());
     let messages = app_state.messages.lock().unwrap();
-    let message_result: Vec<Message> = search_messages_by_name(&messages, &query);
-    let hex_message_result: Vec<Message> = search_messages_by_id(&messages, &query);
-    println!("FOUND: {:?}  signals", signal_result.len());
-    // format the results to an HTML list
-    let mut html = String::from("<ul class=\"list-group\">");
-    for result in signal_result.iter() {
-        html.push_str(&format!("{}", get_li_from_signal(result)));
+    let mut seen = HashSet::new();
+    let mut results = Vec::new();
+
+    for signal in search_signals(&signals, query)
+        .into_iter()
+        .chain(search_signals_by_id(&signals, query))
+    {
+        if seen.insert(format!("signal:{}", signal.name.to_lowercase())) {
+            results.push(SearchResult {
+                kind: "signal".to_string(),
+                name: signal.name,
+                id: signal.sig_id.to_string(),
+                label: signal.label,
+            });
+        }
     }
-    for result in id_signal_result.iter() {
-        html.push_str(&format!("{}", get_li_from_signal(result)));
+
+    for message in search_messages_by_name(&messages, query)
+        .into_iter()
+        .chain(search_messages_by_id(&messages, query))
+    {
+        if seen.insert(format!("message:{}", message.name.to_lowercase())) {
+            results.push(SearchResult {
+                kind: "message".to_string(),
+                name: message.name,
+                id: format!("{:#X}", message.can_id),
+                label: message.label,
+            });
+        }
     }
-    for result in message_result.iter() {
-        html.push_str(&format!("{}", get_li_from_message(result)));
-    }
-    for result in hex_message_result.iter() {
-        html.push_str(&format!("{}", get_li_from_message(result)));
-    }
-    html.push_str("</ul>");
-    html
+
+    results
 }
 
 #[tauri::command]
-fn show_signal(query: &str, app_state: tauri::State<AppState>) -> String {
+fn show_signal(query: &str, app_state: tauri::State<AppState>) -> Result<ViewItem, String> {
     let signals = app_state.signals.lock().unwrap();
-    let result = search_signal(&signals, &query);
-    println!("Signal: {:?}", result);
-    match result {
-        Some(signal) => format!("{}", get_card_from_signal(&signal)),
-        None => "Signal not found".to_string(),
-    }
+    let signal = search_signal(&signals, query).ok_or_else(|| "Signal not found".to_string())?;
+    let view = ViewItem::Signal(signal);
+    push_history(&app_state, view.clone());
+    Ok(view)
 }
 
 #[tauri::command]
-fn show_message(query: &str, app_state: tauri::State<AppState>) -> String {
+fn show_message(query: &str, app_state: tauri::State<AppState>) -> Result<ViewItem, String> {
     let messages = app_state.messages.lock().unwrap();
-    let result = search_message(&messages, &query);
-    println!("Messages: {:?}", result);
-    match result {
-        Some(message) => format!("{}", get_card_from_message(&message)),
-        None => "Signal not found".to_string(),
+    let signals = app_state.signals.lock().unwrap();
+    let message =
+        search_message(&messages, query).ok_or_else(|| "Message not found".to_string())?;
+    let view = ViewItem::Message(message_detail(&message, &signals));
+    push_history(&app_state, view.clone());
+    Ok(view)
+}
+
+#[tauri::command]
+fn upload_dbc(
+    base64_data: String,
+    filename: String,
+    app_state: tauri::State<AppState>,
+) -> LoadResponse {
+    match general_purpose::STANDARD.decode(base64_data) {
+        Ok(contents) => load_dbc_bytes(&contents, filename, &app_state),
+        Err(error) => LoadResponse {
+            loaded: false,
+            filename: None,
+            message: format!("Invalid DBC upload data: {}", error),
+            warnings: Vec::new(),
+        },
     }
 }
-#[tauri::command]
-fn upload_dbc(base64_data: String, filename: String, app_state: tauri::State<AppState>) -> String {
-    // Make the HTTP request in an asynchronous context
 
-    let response = match general_purpose::STANDARD.decode(base64_data) {
-        Ok(v) => {
-            let (decoded_string, _, _) = encoding_rs::WINDOWS_1252.decode(&v);
-            let (messages, signals) = parse_dbc(&decoded_string.into_owned());
-            let mut state_mex = app_state.messages.lock().unwrap();
-            let mut state_sig = app_state.signals.lock().unwrap();
-            let mut state_filename = app_state.filename.lock().unwrap();
-            *state_filename = filename;
-            *state_mex = messages;
-            *state_sig = signals;
-            let response = json!({
-            "code":200,
-            "message":String::from(format!("Loaded file {}", state_filename))
-            });
-            response
+#[tauri::command]
+fn load_file_from_path(path: String, app_state: tauri::State<AppState>) -> LoadResponse {
+    match std::fs::read(&path) {
+        Ok(contents) => {
+            let filename = std::path::Path::new(&path)
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string();
+            load_dbc_bytes(&contents, filename, &app_state)
         }
-        Err(e) => {
-            let response = json!({
-            "code":400,
-            "message":String::from(format!("Invalid UTF-8 sequence: {}", e))
-            });
-            response
-        }
+        Err(error) => LoadResponse {
+            loaded: false,
+            filename: None,
+            message: format!("Failed to read file: {}", error),
+            warnings: Vec::new(),
+        },
+    }
+}
+
+#[tauri::command]
+fn is_dbc_loaded(app_state: tauri::State<AppState>) -> LoadResponse {
+    let filename = app_state.filename.lock().unwrap().clone();
+    let warnings = app_state.parse_warnings.lock().unwrap().clone();
+
+    match filename {
+        Some(filename) => LoadResponse {
+            loaded: true,
+            message: format!("Loaded file {}", filename),
+            filename: Some(filename),
+            warnings,
+        },
+        None => LoadResponse {
+            loaded: false,
+            filename: None,
+            message: "No DBC loaded".to_string(),
+            warnings,
+        },
+    }
+}
+
+#[tauri::command]
+fn get_all_signals(app_state: tauri::State<AppState>) -> Vec<Signal> {
+    app_state.signals.lock().unwrap().clone()
+}
+
+#[tauri::command]
+fn get_all_messages(app_state: tauri::State<AppState>) -> Vec<MessageDetail> {
+    let messages = app_state.messages.lock().unwrap();
+    let signals = app_state.signals.lock().unwrap();
+    messages
+        .iter()
+        .map(|message| message_detail(message, &signals))
+        .collect()
+}
+
+#[tauri::command]
+fn handle_history(query: &str, app_state: tauri::State<AppState>) -> Result<ViewItem, String> {
+    let history = app_state.view_history.lock().unwrap();
+    if history.is_empty() {
+        return Err("No view history yet".to_string());
+    }
+
+    let mut index = app_state.history_index.lock().unwrap();
+    let current = index.unwrap_or(0);
+    let next = match query {
+        "Prev" if current > 0 => current - 1,
+        "Next" if current + 1 < history.len() => current + 1,
+        _ => current,
     };
-    response.to_string()
+    *index = Some(next);
+
+    Ok(history[next].clone())
 }
 
-#[tauri::command]
-fn is_dbc_loaded(app_state: tauri::State<AppState>) -> String {
-    if app_state.messages.lock().unwrap().len() == 0 {
-        let response = json!({
-        "code":404,
-        "message":"No DBC loaded"
-        });
-        response.to_string()
-    } else {
-        let response = json!({
-        "code":200,
-        "message":String::from(format!("Loaded file {}",app_state.filename.lock().unwrap().clone()))
-        });
-        response.to_string()
+fn load_dbc_bytes(
+    contents: &[u8],
+    filename: String,
+    app_state: &tauri::State<AppState>,
+) -> LoadResponse {
+    let (decoded_string, _, _) = encoding_rs::WINDOWS_1252.decode(contents);
+    let parsed = parse_dbc(decoded_string.as_ref());
+
+    let message_count = parsed.messages.len();
+    let signal_count = parsed.signals.len();
+    let warnings = parsed.warnings;
+
+    *app_state.messages.lock().unwrap() = parsed.messages;
+    *app_state.signals.lock().unwrap() = parsed.signals;
+    *app_state.filename.lock().unwrap() = Some(filename.clone());
+    *app_state.parse_warnings.lock().unwrap() = warnings.clone();
+    app_state.view_history.lock().unwrap().clear();
+    *app_state.history_index.lock().unwrap() = None;
+
+    LoadResponse {
+        loaded: true,
+        filename: Some(filename.clone()),
+        message: format!(
+            "Loaded file {} ({} messages, {} signals)",
+            filename, message_count, signal_count
+        ),
+        warnings,
     }
 }
 
-#[tauri::command]
-fn get_all_signals(app_state: tauri::State<AppState>) -> String {
-    let state_sig = app_state.signals.lock().unwrap();
-    let mut html = String::from("<div class=\"accordion\" id=\"signalsAccordion\">");
-    if state_sig.len() > 0 {
-        for result in state_sig.iter() {
-            html.push_str(&format!(
-                "{}",
-                get_details_from_signal(result, String::from("signalsAccordion")).clone()
-            ));
-        }
+fn message_detail(message: &Message, signals: &[Signal]) -> MessageDetail {
+    MessageDetail {
+        message: message.clone(),
+        signals: resolve_message_signals(message, signals),
     }
-    html.push_str("</div>");
-    html
 }
-#[tauri::command]
-fn get_all_messages(app_state: tauri::State<AppState>) -> String {
-    let state_mex = app_state.messages.lock().unwrap();
-    let state_sig = app_state.signals.lock().unwrap();
-    let mut html = String::from("<div class=\"accordion\" id=\"messagesAccordion\">");
-    if state_mex.len() > 0 {
-        for result in state_mex.iter() {
-            html.push_str(&format!("{}", get_details_from_message(result, &state_sig)));
-        }
-    }
-    html.push_str("</div>");
-    html
+
+fn push_history(app_state: &tauri::State<AppState>, view: ViewItem) {
+    let mut history = app_state.view_history.lock().unwrap();
+    history.push(view);
+    *app_state.history_index.lock().unwrap() = Some(history.len() - 1);
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
-fn main() {
-    // Create the index
-    let signals = Vec::new();
-    //let signals = get_signals(&json);
-    let messages = Vec::new();
-    //let messages = get_messages(&json);
-    let app_state = AppState::new(signals, messages);
-    println!("App state created");
+pub fn run() {
+    let app_state = AppState::new();
 
     tauri::Builder::default()
         .manage(app_state)
@@ -188,7 +288,36 @@ fn main() {
             is_dbc_loaded,
             get_all_signals,
             get_all_messages,
+            handle_history,
+            load_file_from_path,
         ])
+        .setup(|app| {
+            let handle = app.handle().clone();
+            let args: Vec<String> = env::args().collect();
+
+            if let Some(file_path) = args.get(1).cloned() {
+                if file_path.to_lowercase().ends_with(".dbc") {
+                    let filename = std::path::Path::new(&file_path)
+                        .file_name()
+                        .unwrap_or_default()
+                        .to_string_lossy()
+                        .to_string();
+
+                    std::thread::spawn(move || {
+                        std::thread::sleep(std::time::Duration::from_millis(500));
+                        let _ = handle.emit(
+                            "file-open",
+                            serde_json::json!({
+                                "path": file_path,
+                                "filename": filename
+                            }),
+                        );
+                    });
+                }
+            }
+
+            Ok(())
+        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
